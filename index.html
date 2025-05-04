@@ -218,5 +218,15 @@ ul.simple-list li { margin-bottom:0.5rem; }
       loadFavorites();
     });
   </script>
+  <script>
+  document.querySelectorAll('.google-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+      });
+      if (error) alert('Error con Google: ' + error.message);
+    });
+  });
+</script>
 </body>
 </html>
