@@ -1,52 +1,352 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <title>Subir Música</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>✧ 𝐅𝐮𝐥𝐥 𝐌ยรเא ✧</title>
+  <style>
+    :root {
+      --gold: #D4AF37; --black: #000; --dark: #111;
+      --gray: #444; --blue: #007BFF; --sidebar-width: 240px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; background: var(--dark); color: #fff; }
+    header { position: fixed; top: 0; left: 0; right: 0; height: 60px; background: var(--black); color: var(--gold);
+             display: flex; align-items: center; padding: 0 1rem; z-index: 1000; }
+    #menuBtn { background: none; border: none; color: var(--gold); font-size: 1.5rem; cursor: pointer; }
+    header h1 { flex: 1; text-align: center; font-size: 1.25rem; }
+
+    /* Sidebar oculto por defecto */
+    #sidebar { position: fixed; top: 60px; bottom: 0;
+               left: calc(-1 * var(--sidebar-width)); width: var(--sidebar-width);
+               background: var(--black); transition: left 0.3s ease;
+               overflow-y: auto; z-index: 900; }
+    #sidebar.open { left: 0; }
+    #closeBtn { position: absolute; top: 10px; right: 10px;
+                background: none; border: none; color: var(--gold);
+                font-size: 1.5rem; cursor: pointer; }
+    nav ul { list-style: none; padding: 1rem; margin-top: 40px; }
+    nav li { margin-bottom: 0.5rem; }
+    .nav-btn { width: 100%; padding: 0.75rem 1rem; background: none; border: none;
+               color: #ccc; text-align: left; font-size: 1rem; cursor: pointer;
+               transition: background 0.2s; }
+    .nav-btn:hover, .nav-btn.active { background: var(--gray); color: #fff; }
+
+    /* Overlay para clic fuera */
+    #overlay { position: fixed; top: 60px; left: 0; right: 0; bottom: 0;
+                background: rgba(0,0,0,0.4); display: none; z-index: 850; }
+    #overlay.active { display: block; }
+
+    main { margin-top: 60px; margin-left: 0; padding: 1rem; transition: margin-left 0.3s ease; }
+    main.shifted { margin-left: var(--sidebar-width); }
+
+    .section { display: none; }
+    .section.active { display: block; }
+
+    .upload-area, .player-area, .section-content {
+      background: var(--black); border-radius: 8px; padding: 1rem;
+      margin-bottom: 1rem; border: 1px solid var(--gray);
+    }
+    .upload-area input[type=file] {
+      width: 100%; padding: 0.5rem; background: var(--dark);
+      border: 1px solid var(--gray); color: #fff;
+    }
+    .upload-area button {
+      margin-top: 0.5rem; width: 100%; padding: 0.75rem;
+      background: var(--gold); border: none; color: var(--black);
+      font-weight: bold; cursor: pointer; border-radius: 4px;
+    }
+
+    footer.controls {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      background: var(--black); padding: 0.5rem 1rem;
+      display: flex; justify-content: space-around;
+      border-top: 1px solid var(--gray);
+    }
+    footer.controls button {
+      background: none; border: none; color: var(--gold);
+      font-size: 1.5rem; cursor: pointer;
+    }
+    footer.controls button.active { color: var(--blue); }
+
+    #trackInfo { margin-top: 0.5rem; font-size: 0.9rem; color: #ccc; }
+    ul.simple-list { list-style: none; padding: 0; margin: 0; }
+    ul.simple-list li { margin-bottom: 0.5rem; }
+  </style>
 </head>
 <body>
-  <h1>Subir archivo de música</h1>
-  <input type="file" id="fileInput" accept="audio/*" />
-  <button onclick="subirArchivo()">Subir</button>
-  <p id="mensaje"></p>
-  <audio id="player" controls style="display: none; margin-top: 20px;"></audio>
+  <header>
+    <button id="menuBtn" aria-label="Mostrar/Ocultar menú">☰</button>
+    <h1>✧ 𝐅𝐮𝐥𝐥 𝐌ยรเא ✧</h1>
+  </header>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <aside id="sidebar" aria-label="Navegación">
+    <button id="closeBtn" aria-label="Ocultar menú">×</button>
+    <nav>
+      <ul>
+        <li><button class="nav-btn active" data-target="section-Inicio">Inicio</button></li>
+        <li><button class="nav-btn" data-target="section-Recientes">Recientes</button></li>
+        <li><button class="nav-btn" data-target="section-Buscar">Buscar</button></li>
+        <li><button class="nav-btn" data-target="section-Bibliotecas">Bibliotecas</button></li>
+        <li><button class="nav-btn" data-target="section-CrearBiblioteca">Crear Biblioteca</button></li>
+        <li><button class="nav-btn" data-target="section-Favoritos">Favoritos</button></li>
+      </ul>
+    </nav>
+  </aside>
+
+  <div id="overlay"></div>
+
+  <main id="mainContent">
+    <section id="section-Inicio" class="section active">
+      <div class="upload-area">
+        <h2>Subir Música</h2>
+        <input type="file" id="fileUpload" accept="audio/*">
+        <button id="uploadBtn" disabled>Subir a Supabase</button>
+      </div>
+      <div class="player-area">
+        <h2>Reproductor</h2>
+        <audio id="audio-player" controls style="width:100%;"></audio>
+        <div id="trackInfo">Sin pista seleccionada</div>
+      </div>
+    </section>
+
+    <section id="section-Recientes" class="section">
+      <div class="section-content">
+        <h2>Recientes</h2>
+        <ul id="recentList" class="simple-list"></ul>
+      </div>
+    </section>
+
+    <section id="section-Buscar" class="section">
+      <div class="section-content">
+        <h2>Buscar Música</h2>
+        <input type="text" id="searchInput" placeholder="Buscar..."
+               style="width:100%; padding:0.5rem; border-radius:4px; border:1px solid var(--gray); background:var(--dark); color:#fff;">
+        <ul id="searchResults" class="simple-list" style="margin-top:1rem;"></ul>
+      </div>
+    </section>
+
+    <section id="section-Bibliotecas" class="section">
+      <div class="section-content">
+        <h2>Bibliotecas</h2>
+        <ul id="libraryList" class="simple-list"></ul>
+      </div>
+    </section>
+
+    <section id="section-CrearBiblioteca" class="section">
+      <div class="section-content">
+        <h2>Crear Biblioteca</h2>
+        <input type="text" id="libraryName" placeholder="Nombre de la biblioteca"
+               style="width:100%; padding:0.5rem; border-radius:4px; border:1px solid var(--gray); background:var(--dark); color:#fff;">
+        <button id="createLibraryBtn"
+                style="margin-top:0.5rem; padding:0.75rem; width:100%; background:var(--blue); border:none; border-radius:4px; color:#fff; cursor:pointer;">
+          Crear
+        </button>
+      </div>
+    </section>
+
+    <section id="section-Favoritos" class="section">
+      <div class="section-content">
+        <h2>Favoritos</h2>
+        <ul id="favoritesList" class="simple-list"></ul>
+      </div>
+    </section>
+  </main>
+
+  <footer class="controls">
+    <button id="shuffleBtn" aria-label="Modo aleatorio">🔀</button>
+    <button id="repeatBtn" aria-label="Repetir">🔁</button>
+    <button id="playPauseBtn" aria-label="Play/Pause">⏯️</button>
+    <button id="speedBtn" aria-label="Velocidad">1x</button>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
-    const supabase = supabase.createClient(
-      'https://gkeavgroxgdgbertrruj.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdrZWF2Z3JveGdkZ2JlcnRycnVqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzMjM3ODgsImV4cCI6MjA2MTg5OTc4OH0.HNrr972mCyzG7oEwFwyTgKUBwbm1ik630jiZQ1hiJKs'
-    );
+    document.addEventListener('DOMContentLoaded', () => {
+      const supabaseUrl = 'https://gkeavgroxgdgbertrruj.supabase.co';
+      const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdrZWF2Z3JveGdkZ2JlcnRycnVqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzMjM3ODgsImV4cCI6MjA2MTg5OTc4OH0.HNrr972mCyzG7oEwFwyTgKUBwbm1ik630jiZQ1hiJKs';
+      const supabase    = window.supabase.createClient(supabaseUrl, supabaseKey);
 
-    async function subirArchivo() {
-      const archivo = document.getElementById('fileInput').files[0];
-      if (!archivo) return alert("Selecciona un archivo");
+      // Elementos del DOM
+      const menuBtn       = document.getElementById('menuBtn');
+      const closeBtn      = document.getElementById('closeBtn');
+      const overlay       = document.getElementById('overlay');
+      const sidebar       = document.getElementById('sidebar');
+      const main          = document.getElementById('mainContent');
+      const navBtns       = document.querySelectorAll('.nav-btn');
+      const sections      = document.querySelectorAll('.section');
+      const fileInput     = document.getElementById('fileUpload');
+      const uploadBtn     = document.getElementById('uploadBtn');
+      const audio         = document.getElementById('audio-player');
+      const trackInfo     = document.getElementById('trackInfo');
+      const recentList    = document.getElementById('recentList');
+      const searchInput   = document.getElementById('searchInput');
+      const searchResults = document.getElementById('searchResults');
+      const libraryName   = document.getElementById('libraryName');
+      const createLibraryBtn = document.getElementById('createLibraryBtn');
+      const libraryList   = document.getElementById('libraryList');
+      const favoritesList = document.getElementById('favoritesList');
+      const shuffleBtn    = document.getElementById('shuffleBtn');
+      const repeatBtn     = document.getElementById('repeatBtn');
+      const playPauseBtn  = document.getElementById('playPauseBtn');
+      const speedBtn      = document.getElementById('speedBtn');
 
-      const ruta = `musica/${archivo.name}`;
+      // Inicial menú cerrado
+      sidebar.classList.remove('open');
+      main.classList.remove('shifted');
+      overlay.classList.remove('active');
+      menuBtn.textContent = '☰';
 
-      // Subida
-      const { error } = await supabase.storage
-        .from('tracks')
-        .upload(ruta, archivo, {
-          cacheControl: '3600',
-          upsert: true
-        });
+      // Estado de audio
+      let selectedFile = null,
+          tracks       = [],
+          currentIndex = -1,
+          isShuffling  = false,
+          playbackSpeed= 1;
 
-      const mensaje = document.getElementById('mensaje');
-      const player = document.getElementById('player');
-
-      if (error) {
-        console.error('Error al subir:', error.message);
-        mensaje.textContent = 'Error al subir: ' + error.message;
-        player.style.display = 'none';
-      } else {
-        const { data } = supabase.storage.from('tracks').getPublicUrl(ruta);
-        mensaje.textContent = 'Subido con éxito: ' + data.publicUrl;
-        player.src = data.publicUrl;
-        player.style.display = 'block';
-        player.play();
+      // Abrir/cerrar sidebar
+      function toggleSidebar() {
+        const open = sidebar.classList.toggle('open');
+        main.classList.toggle('shifted', open);
+        overlay.classList.toggle('active', open);
+        menuBtn.textContent = open ? '×' : '☰';
       }
-    }
+      menuBtn.addEventListener('click', toggleSidebar);
+      closeBtn.addEventListener('click', toggleSidebar);
+      overlay.addEventListener('click', () => {
+        if (sidebar.classList.contains('open')) toggleSidebar();
+      });
+      navBtns.forEach(btn => btn.addEventListener('click', () => {
+        navBtns.forEach(b => b.classList.remove('active'));
+        sections.forEach(s => s.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById(btn.dataset.target).classList.add('active');
+        if (sidebar.classList.contains('open')) toggleSidebar();
+      }));
+
+      // Previsualizar audio
+      fileInput.addEventListener('change', () => {
+        selectedFile = fileInput.files[0] || null;
+        if (selectedFile) {
+          audio.src = URL.createObjectURL(selectedFile);
+          trackInfo.textContent = selectedFile.name;
+          uploadBtn.disabled = false;
+        } else {
+          uploadBtn.disabled = true;
+          audio.removeAttribute('src');
+          trackInfo.textContent = 'Sin pista seleccionada';
+        }
+      });
+
+      // Subir usando bucket "tracks" y manejar RLS
+      uploadBtn.addEventListener('click', async () => {
+        if (!selectedFile) return;
+        uploadBtn.disabled = true;
+        const path = `tracks/${Date.now()}_${selectedFile.name}`;
+        const { data, error } = await supabase
+          .storage
+          .from('tracks')
+          .upload(path, selectedFile, { upsert: true });
+
+        if (error) {
+          if (error.status === 404) {
+            alert('Error: el bucket "tracks" no existe. Crea un bucket público llamado "tracks" en Supabase Storage.');
+          }
+          else if (error.message.includes('row-level security')) {
+            alert(
+              'Error: new row violates row-level security policy.\n' +
+              '→ Ve a tu panel Supabase → Storage → Policies → objects.\n' +
+              '→ Habilita la política de INSERT para usuarios autenticados.'
+            );
+          }
+          else {
+            alert('Error al subir: ' + error.message);
+          }
+          uploadBtn.disabled = false;
+          return;
+        }
+
+        const url = `${supabaseUrl}/storage/v1/object/public/tracks/${path}`;
+        tracks.push({ name: selectedFile.name, url });
+        currentIndex = tracks.length - 1;
+        renderRecents();
+        playTrack(currentIndex);
+        fileInput.value = '';
+      });
+
+      // Reproducción
+      function playTrack(i) {
+        if (!tracks[i]) return;
+        const t = tracks[i];
+        audio.src = t.url;
+        audio.playbackRate = playbackSpeed;
+        audio.play();
+        trackInfo.textContent = t.name;
+      }
+      audio.addEventListener('ended', () => {
+        if (!tracks.length) return;
+        currentIndex = isShuffling
+          ? Math.floor(Math.random() * tracks.length)
+          : (currentIndex + 1) % tracks.length;
+        playTrack(currentIndex);
+      });
+
+      // Controles extra
+      shuffleBtn.addEventListener('click', () => shuffleBtn.classList.toggle('active', isShuffling = !isShuffling));
+      repeatBtn.addEventListener('click', () => repeatBtn.classList.toggle('active', audio.loop = !audio.loop));
+      playPauseBtn.addEventListener('click', () => audio.paused ? audio.play() : audio.pause());
+      speedBtn.addEventListener('click', () => {
+        playbackSpeed = playbackSpeed === 1 ? 1.5 : playbackSpeed === 1.5 ? 2 : 1;
+        audio.playbackRate = playbackSpeed;
+        speedBtn.textContent = playbackSpeed + 'x';
+      });
+
+      function renderRecents() {
+        recentList.innerHTML = tracks
+          .map((t,i) => `<li><button onclick="playTrack(${i})">${t.name}</button></li>`)
+          .join('');
+      }
+
+      // Buscar en pistas cargadas
+      searchInput.addEventListener('input', () => {
+        const q = searchInput.value.toLowerCase();
+        searchResults.innerHTML = tracks
+          .filter(t => t.name.toLowerCase().includes(q))
+          .map((t,i) => `<li><button onclick="playTrack(${i})">${t.name}</button></li>`)
+          .join('');
+      });
+
+      // Bibliotecas
+      function loadLibraries() {
+        const libs = JSON.parse(localStorage.getItem('libs')||'[]');
+        libraryList.innerHTML = libs.map(l=>`<li>${l}</li>`).join('');
+      }
+      createLibraryBtn.addEventListener('click', () => {
+        const name = libraryName.value.trim();
+        if (!name) return alert('Ingresa un nombre válido');
+        const libs = JSON.parse(localStorage.getItem('libs')||'[]');
+        libs.push(name);
+        localStorage.setItem('libs', JSON.stringify(libs));
+        libraryName.value = '';
+        loadLibraries();
+      });
+      loadLibraries();
+
+      // Favoritos (doble clic)
+      function loadFavorites() {
+        const favs = JSON.parse(localStorage.getItem('favs')||'[]');
+        favoritesList.innerHTML = favs.map(f=>`<li>${f}</li>`).join('');
+      }
+      audio.addEventListener('dblclick', () => {
+        const name = trackInfo.textContent;
+        if (!name) return;
+        const favs = JSON.parse(localStorage.getItem('favs')||'[]');
+        if (!favs.includes(name)) favs.push(name);
+        localStorage.setItem('favs', JSON.stringify(favs));
+        loadFavorites();
+      });
+      loadFavorites();
+    });
   </script>
 </body>
-</html>
+  </html>
