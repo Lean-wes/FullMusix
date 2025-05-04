@@ -163,8 +163,13 @@ document.addEventListener('DOMContentLoaded', () => {
   // Autenticación con Google
   document.querySelectorAll('.google-btn').forEach(btn => {
     btn.addEventListener('click', async () => {
-      const { error } = await supabase.auth.signInWithOAuth({ provider: 'google' });
-      if (error) console.error('Error autenticación Google:', error.message);
+      const { error } = await supabase.auth.signInWithOAuth({
+  provider: 'google',
+  options: {
+    redirectTo: 'https://lean‑wes.github.io/FullMusix/'
+      }
+    })
+        if (error) console.error('Error autenticación Google:', error.message);
     });
   });
 
