@@ -15,16 +15,8 @@
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: Arial, sans-serif; background: var(--dark); color: #fff; }
-
-    header {
-      position: fixed; top: 0; left: 0; right: 0; height: 60px;
-      background: var(--black); color: var(--gold);
-      display: flex; align-items: center; padding: 0 1rem; z-index: 1000;
-    }
-    #menuBtn {
-      background: none; border: none; color: var(--gold);
-      font-size: 1.5rem; cursor: pointer;
-    }
+    header { position: fixed; top: 0; left: 0; right: 0; height: 60px; background: var(--black); color: var(--gold); display: flex; align-items: center; padding: 0 1rem; z-index: 1000; }
+    #menuBtn { background: none; border: none; color: var(--gold); font-size: 1.5rem; cursor: pointer; }
     header h1 { flex: 1; text-align: center; font-size: 1.25rem; }
 
     /* Sidebar oculto por defecto */
@@ -35,68 +27,39 @@
       transition: left 0.3s ease; overflow-y: auto; z-index: 900;
     }
     #sidebar.open { left: 0; }
-    #closeBtn {
-      position: absolute; top: 10px; right: 10px;
-      background: none; border: none; color: var(--gold);
-      font-size: 1.5rem; cursor: pointer;
-    }
+    #closeBtn { position: absolute; top: 10px; right: 10px; background: none; border: none; color: var(--gold); font-size: 1.5rem; cursor: pointer; }
     nav ul { list-style: none; padding: 1rem; margin-top: 40px; }
     nav li { margin-bottom: 0.5rem; }
-    .nav-btn {
-      width: 100%; padding: 0.75rem 1rem; background: none;
-      border: none; color: #ccc; text-align: left;
-      font-size: 1rem; cursor: pointer; transition: background 0.2s;
-    }
-    .nav-btn:hover,
-    .nav-btn.active { background: var(--gray); color: #fff; }
+    .nav-btn { width: 100%; padding: 0.75rem 1rem; background: none; border: none; color: #ccc; text-align: left; font-size: 1rem; cursor: pointer; transition: background 0.2s; }
+    .nav-btn:hover, .nav-btn.active { background: var(--gray); color: #fff; }
 
     /* Overlay para clic fuera */
-    #overlay {
-      position: fixed; top: 60px; left: 0; right: 0; bottom: 0;
-      background: rgba(0,0,0,0.4); display: none; z-index: 850;
-    }
+    #overlay { position: fixed; top: 60px; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.4); display: none; z-index: 850; }
     #overlay.active { display: block; }
 
-    main {
-      margin-top: 60px; margin-left: 0; padding: 1rem;
-      transition: margin-left 0.3s ease;
-    }
+    main { margin-top: 60px; margin-left: 0; padding: 1rem; transition: margin-left 0.3s ease; }
     main.shifted { margin-left: var(--sidebar-width); }
 
     .section { display: none; }
     .section.active { display: block; }
 
     .upload-area, .player-area, .section-content {
-      background: var(--black); border-radius: 8px;
-      padding: 1rem; margin-bottom: 1rem;
-      border: 1px solid var(--gray);
+      background: var(--black); border-radius: 8px; padding: 1rem; margin-bottom: 1rem; border: 1px solid var(--gray);
     }
     .upload-area input[type=file] {
-      width: 100%; padding: 0.5rem;
-      background: var(--dark); border: 1px solid var(--gray);
-      color: #fff;
+      width: 100%; padding: 0.5rem; background: var(--dark); border: 1px solid var(--gray); color: #fff;
     }
     .upload-area button {
-      margin-top: 0.5rem; width: 100%; padding: 0.75rem;
-      background: var(--gold); border: none; color: var(--black);
-      font-weight: bold; cursor: pointer; border-radius: 4px;
+      margin-top: 0.5rem; width: 100%; padding: 0.75rem; background: var(--gold); border: none; color: var(--black); font-weight: bold; cursor: pointer; border-radius: 4px;
     }
 
     footer.controls {
-      position: fixed; bottom: 0; left: 0; right: 0;
-      background: var(--black); padding: 0.5rem 1rem;
-      display: flex; justify-content: space-around;
-      border-top: 1px solid var(--gray);
+      position: fixed; bottom: 0; left: 0; right: 0; background: var(--black); padding: 0.5rem 1rem; display: flex; justify-content: space-around; border-top: 1px solid var(--gray);
     }
-    footer.controls button {
-      background: none; border: none; color: var(--gold);
-      font-size: 1.5rem; cursor: pointer;
-    }
+    footer.controls button { background: none; border: none; color: var(--gold); font-size: 1.5rem; cursor: pointer; }
     footer.controls button.active { color: var(--blue); }
 
-    #trackInfo {
-      margin-top: 0.5rem; font-size: 0.9rem; color: #ccc;
-    }
+    #trackInfo { margin-top: 0.5rem; font-size: 0.9rem; color: #ccc; }
     ul.simple-list { list-style: none; padding: 0; margin: 0; }
     ul.simple-list li { margin-bottom: 0.5rem; }
   </style>
@@ -112,11 +75,11 @@
     <nav>
       <ul>
         <li><button class="nav-btn active" data-target="section-Inicio">Inicio</button></li>
-        <li><button class="nav-btn"    data-target="section-Recientes">Recientes</button></li>
-        <li><button class="nav-btn"    data-target="section-Buscar">Buscar</button></li>
-        <li><button class="nav-btn"    data-target="section-Bibliotecas">Bibliotecas</button></li>
-        <li><button class="nav-btn"    data-target="section-CrearBiblioteca">Crear Biblioteca</button></li>
-        <li><button class="nav-btn"    data-target="section-Favoritos">Favoritos</button></li>
+        <li><button class="nav-btn" data-target="section-Recientes">Recientes</button></li>
+        <li><button class="nav-btn" data-target="section-Buscar">Buscar</button></li>
+        <li><button class="nav-btn" data-target="section-Bibliotecas">Bibliotecas</button></li>
+        <li><button class="nav-btn" data-target="section-CrearBiblioteca">Crear Biblioteca</button></li>
+        <li><button class="nav-btn" data-target="section-Favoritos">Favoritos</button></li>
       </ul>
     </nav>
   </aside>
@@ -176,83 +139,70 @@
   </main>
 
   <footer class="controls">
-    <button id="shuffleBtn"     aria-label="Modo aleatorio">🔀</button>
-    <button id="repeatBtn"      aria-label="Repetir">🔁</button>
-    <button id="playPauseBtn"   aria-label="Play/Pause">⏯️</button>
-    <button id="speedBtn"       aria-label="Velocidad">1x</button>
+    <button id="shuffleBtn" aria-label="Modo aleatorio">🔀</button>
+    <button id="repeatBtn" aria-label="Repetir">🔁</button>
+    <button id="playPauseBtn" aria-label="Play/Pause">⏯️</button>
+    <button id="speedBtn" aria-label="Velocidad">1x</button>
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      // 1. Cliente Supabase
       const supabaseUrl  = 'https://vcybnzmoszsghajsoqvn.supabase.co';
       const supabaseKey  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZjeWJuem1vc3pzZ2hhanNvcXZuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzMDQ2ODcsImV4cCI6MjA2MTg4MDY4N30.gp2j9MbiHGuhqQcvlzV8ljXXbVkvB1iuzZtJUVFdDBU';
-      const supabase    = window.supabase.createClient(supabaseUrl, supabaseKey);
+      const supabase     = window.supabase.createClient(supabaseUrl, supabaseKey);
 
-      // 2. Elementos del DOM
-      const menuBtn       = document.getElementById('menuBtn');
-      const closeBtn      = document.getElementById('closeBtn');
-      const overlay       = document.getElementById('overlay');
-      const sidebar       = document.getElementById('sidebar');
-      const main          = document.getElementById('mainContent');
-      const navBtns       = document.querySelectorAll('.nav-btn');
-      const sections      = document.querySelectorAll('.section');
-      const fileInput     = document.getElementById('fileUpload');
-      const uploadBtn     = document.getElementById('uploadBtn');
-      const audio         = document.getElementById('audio-player');
-      const trackInfo     = document.getElementById('trackInfo');
-      const recentList    = document.getElementById('recentList');
+      // Elementos
+      const menuBtn   = document.getElementById('menuBtn');
+      const closeBtn  = document.getElementById('closeBtn');
+      const overlay   = document.getElementById('overlay');
+      const sidebar   = document.getElementById('sidebar');
+      const main      = document.getElementById('mainContent');
+      const navBtns   = document.querySelectorAll('.nav-btn');
+      const sections  = document.querySelectorAll('.section');
+      const fileInput = document.getElementById('fileUpload');
+      const uploadBtn = document.getElementById('uploadBtn');
+      const audio     = document.getElementById('audio-player');
+      const trackInfo = document.getElementById('trackInfo');
+      const recentList= document.getElementById('recentList');
       const searchInput   = document.getElementById('searchInput');
       const searchResults = document.getElementById('searchResults');
-      const libraryName   = document.getElementById('libraryName');
-      const createLibraryBtn = document.getElementById('createLibraryBtn');
-      const libraryList   = document.getElementById('libraryList');
-      const favoritesList = document.getElementById('favoritesList');
-      const shuffleBtn    = document.getElementById('shuffleBtn');
-      const repeatBtn     = document.getElementById('repeatBtn');
-      const playPauseBtn  = document.getElementById('playPauseBtn');
-      const speedBtn      = document.getElementById('speedBtn');
+      const libraryName     = document.getElementById('libraryName');
+      const createLibraryBtn= document.getElementById('createLibraryBtn');
+      const libraryList     = document.getElementById('libraryList');
+      const favoritesList   = document.getElementById('favoritesList');
+      const shuffleBtn      = document.getElementById('shuffleBtn');
+      const repeatBtn       = document.getElementById('repeatBtn');
+      const playPauseBtn    = document.getElementById('playPauseBtn');
+      const speedBtn        = document.getElementById('speedBtn');
 
-      // 3. Estado inicial menú cerrado
+      // Inicial menú cerrado
       sidebar.classList.remove('open');
       main.classList.remove('shifted');
       overlay.classList.remove('active');
       menuBtn.textContent = '☰';
 
-      // 4. Estado de reproducción
-      let selectedFile = null;
-      let tracks       = [];
-      let currentIndex = -1;
-      let isShuffling  = false;
-      let playbackSpeed= 1;
+      let selectedFile = null, tracks = [], currentIndex = -1, isShuffling = false, playbackSpeed = 1;
 
-      // 5. Función abrir/cerrar menú
+      // Abrir/cerrar menú
       function toggleSidebar() {
-        const opened = sidebar.classList.toggle('open');
-        main.classList.toggle('shifted', opened);
-        overlay.classList.toggle('active', opened);
-        menuBtn.textContent = opened ? '×' : '☰';
+        const open = sidebar.classList.toggle('open');
+        main.classList.toggle('shifted', open);
+        overlay.classList.toggle('active', open);
+        menuBtn.textContent = open ? '×' : '☰';
       }
-
-      // 6. Listeners menú
       menuBtn.addEventListener('click', toggleSidebar);
       closeBtn.addEventListener('click', toggleSidebar);
-      overlay.addEventListener('click', () => {
+      overlay.addEventListener('click', () => { if (sidebar.classList.contains('open')) toggleSidebar(); });
+      navBtns.forEach(btn => btn.addEventListener('click', () => {
+        navBtns.forEach(b=>b.classList.remove('active'));
+        sections.forEach(s=>s.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById(btn.dataset.target).classList.add('active');
         if (sidebar.classList.contains('open')) toggleSidebar();
-      });
+      }));
 
-      navBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
-          navBtns.forEach(b => b.classList.remove('active'));
-          sections.forEach(s => s.classList.remove('active'));
-          btn.classList.add('active');
-          document.getElementById(btn.dataset.target).classList.add('active');
-          if (sidebar.classList.contains('open')) toggleSidebar();
-        });
-      });
-
-      // 7. Previsualizar audio
+      // Previsualizar audio
       fileInput.addEventListener('change', () => {
         selectedFile = fileInput.files[0] || null;
         if (selectedFile) {
@@ -266,21 +216,27 @@
         }
       });
 
-      // 8. Subir y reproducir desde Supabase
+      // Subir usando bucket "tracks"
       uploadBtn.addEventListener('click', async () => {
         if (!selectedFile) return;
         uploadBtn.disabled = true;
-        const path = `audios/${Date.now()}_${selectedFile.name}`;
-        const { error } = await supabase
+        const path = `tracks/${Date.now()}_${selectedFile.name}`;
+        const { data, error } = await supabase
           .storage
-          .from('musica')
+          .from('tracks')
           .upload(path, selectedFile, { upsert: true });
+
         if (error) {
-          alert('Error al subir: ' + error.message);
+          if (error.status === 404) {
+            alert('Error: el bucket "tracks" no existe. Crea un bucket público llamado "tracks" en Supabase Storage.');
+          } else {
+            alert('Error al subir: ' + error.message);
+          }
           uploadBtn.disabled = false;
           return;
         }
-        const url = `${supabaseUrl}/storage/v1/object/public/musica/${path}`;
+
+        const url = `${supabaseUrl}/storage/v1/object/public/tracks/${path}`;
         tracks.push({ name: selectedFile.name, url });
         currentIndex = tracks.length - 1;
         renderRecents();
@@ -288,7 +244,7 @@
         fileInput.value = '';
       });
 
-      // 9. Funciones de reproducción
+      // Reproducción
       function playTrack(i) {
         if (!tracks[i]) return;
         const t = tracks[i];
@@ -305,18 +261,10 @@
         playTrack(currentIndex);
       });
 
-      // 10. Controles extra
-      shuffleBtn.addEventListener('click', () => {
-        isShuffling = !isShuffling;
-        shuffleBtn.classList.toggle('active', isShuffling);
-      });
-      repeatBtn.addEventListener('click', () => {
-        audio.loop = !audio.loop;
-        repeatBtn.classList.toggle('active', audio.loop);
-      });
-      playPauseBtn.addEventListener('click', () => {
-        audio.paused ? audio.play() : audio.pause();
-      });
+      // Controles extra
+      shuffleBtn.addEventListener('click', () => shuffleBtn.classList.toggle('active', isShuffling = !isShuffling));
+      repeatBtn.addEventListener('click', () => repeatBtn.classList.toggle('active', audio.loop = !audio.loop));
+      playPauseBtn.addEventListener('click', () => audio.paused ? audio.play() : audio.pause());
       speedBtn.addEventListener('click', () => {
         playbackSpeed = playbackSpeed === 1 ? 1.5 : playbackSpeed === 1.5 ? 2 : 1;
         audio.playbackRate = playbackSpeed;
@@ -329,7 +277,7 @@
           .join('');
       }
 
-      // 11. Buscar en pistas cargadas
+      // Buscar
       searchInput.addEventListener('input', () => {
         const q = searchInput.value.toLowerCase();
         searchResults.innerHTML = tracks
@@ -338,15 +286,15 @@
           .join('');
       });
 
-      // 12. Bibliotecas en localStorage
+      // Bibliotecas
       function loadLibraries() {
-        const libs = JSON.parse(localStorage.getItem('libs') || '[]');
-        libraryList.innerHTML = libs.map(l => `<li>${l}</li>`).join('');
+        const libs = JSON.parse(localStorage.getItem('libs')||'[]');
+        libraryList.innerHTML = libs.map(l=>`<li>${l}</li>`).join('');
       }
       createLibraryBtn.addEventListener('click', () => {
         const name = libraryName.value.trim();
         if (!name) return alert('Ingresa un nombre válido');
-        const libs = JSON.parse(localStorage.getItem('libs') || '[]');
+        const libs = JSON.parse(localStorage.getItem('libs')||'[]');
         libs.push(name);
         localStorage.setItem('libs', JSON.stringify(libs));
         libraryName.value = '';
@@ -354,15 +302,15 @@
       });
       loadLibraries();
 
-      // 13. Favoritos con doble clic
+      // Favoritos
       function loadFavorites() {
-        const favs = JSON.parse(localStorage.getItem('favs') || '[]');
-        favoritesList.innerHTML = favs.map(f => `<li>${f}</li>`).join('');
+        const favs = JSON.parse(localStorage.getItem('favs')||'[]');
+        favoritesList.innerHTML = favs.map(f=>`<li>${f}</li>`).join('');
       }
       audio.addEventListener('dblclick', () => {
         const name = trackInfo.textContent;
         if (!name) return;
-        const favs = JSON.parse(localStorage.getItem('favs') || '[]');
+        const favs = JSON.parse(localStorage.getItem('favs')||'[]');
         if (!favs.includes(name)) favs.push(name);
         localStorage.setItem('favs', JSON.stringify(favs));
         loadFavorites();
