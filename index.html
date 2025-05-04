@@ -6,35 +6,35 @@
   <title>✧ 𝐅𝐮𝐥𝐥 𝐌ยรเא ✧</title>
   <style>
     :root {
-      --gold: #D4AF37;
-      --black: #000;
-      --dark: #111;
-      --gray: #444;
-      --blue: #007BFF;
-      --sidebar-width: 240px;
+      --gold: #D4AF37; --black: #000; --dark: #111;
+      --gray: #444; --blue: #007BFF; --sidebar-width: 240px;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: Arial, sans-serif; background: var(--dark); color: #fff; }
-    header { position: fixed; top: 0; left: 0; right: 0; height: 60px; background: var(--black); color: var(--gold); display: flex; align-items: center; padding: 0 1rem; z-index: 1000; }
+    header { position: fixed; top: 0; left: 0; right: 0; height: 60px; background: var(--black); color: var(--gold);
+             display: flex; align-items: center; padding: 0 1rem; z-index: 1000; }
     #menuBtn { background: none; border: none; color: var(--gold); font-size: 1.5rem; cursor: pointer; }
     header h1 { flex: 1; text-align: center; font-size: 1.25rem; }
 
     /* Sidebar oculto por defecto */
-    #sidebar {
-      position: fixed; top: 60px; bottom: 0;
-      left: calc(-1 * var(--sidebar-width));
-      width: var(--sidebar-width); background: var(--black);
-      transition: left 0.3s ease; overflow-y: auto; z-index: 900;
-    }
+    #sidebar { position: fixed; top: 60px; bottom: 0;
+               left: calc(-1 * var(--sidebar-width)); width: var(--sidebar-width);
+               background: var(--black); transition: left 0.3s ease;
+               overflow-y: auto; z-index: 900; }
     #sidebar.open { left: 0; }
-    #closeBtn { position: absolute; top: 10px; right: 10px; background: none; border: none; color: var(--gold); font-size: 1.5rem; cursor: pointer; }
+    #closeBtn { position: absolute; top: 10px; right: 10px;
+                background: none; border: none; color: var(--gold);
+                font-size: 1.5rem; cursor: pointer; }
     nav ul { list-style: none; padding: 1rem; margin-top: 40px; }
     nav li { margin-bottom: 0.5rem; }
-    .nav-btn { width: 100%; padding: 0.75rem 1rem; background: none; border: none; color: #ccc; text-align: left; font-size: 1rem; cursor: pointer; transition: background 0.2s; }
+    .nav-btn { width: 100%; padding: 0.75rem 1rem; background: none; border: none;
+               color: #ccc; text-align: left; font-size: 1rem; cursor: pointer;
+               transition: background 0.2s; }
     .nav-btn:hover, .nav-btn.active { background: var(--gray); color: #fff; }
 
     /* Overlay para clic fuera */
-    #overlay { position: fixed; top: 60px; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.4); display: none; z-index: 850; }
+    #overlay { position: fixed; top: 60px; left: 0; right: 0; bottom: 0;
+                background: rgba(0,0,0,0.4); display: none; z-index: 850; }
     #overlay.active { display: block; }
 
     main { margin-top: 60px; margin-left: 0; padding: 1rem; transition: margin-left 0.3s ease; }
@@ -44,19 +44,29 @@
     .section.active { display: block; }
 
     .upload-area, .player-area, .section-content {
-      background: var(--black); border-radius: 8px; padding: 1rem; margin-bottom: 1rem; border: 1px solid var(--gray);
+      background: var(--black); border-radius: 8px; padding: 1rem;
+      margin-bottom: 1rem; border: 1px solid var(--gray);
     }
     .upload-area input[type=file] {
-      width: 100%; padding: 0.5rem; background: var(--dark); border: 1px solid var(--gray); color: #fff;
+      width: 100%; padding: 0.5rem; background: var(--dark);
+      border: 1px solid var(--gray); color: #fff;
     }
     .upload-area button {
-      margin-top: 0.5rem; width: 100%; padding: 0.75rem; background: var(--gold); border: none; color: var(--black); font-weight: bold; cursor: pointer; border-radius: 4px;
+      margin-top: 0.5rem; width: 100%; padding: 0.75rem;
+      background: var(--gold); border: none; color: var(--black);
+      font-weight: bold; cursor: pointer; border-radius: 4px;
     }
 
     footer.controls {
-      position: fixed; bottom: 0; left: 0; right: 0; background: var(--black); padding: 0.5rem 1rem; display: flex; justify-content: space-around; border-top: 1px solid var(--gray);
+      position: fixed; bottom: 0; left: 0; right: 0;
+      background: var(--black); padding: 0.5rem 1rem;
+      display: flex; justify-content: space-around;
+      border-top: 1px solid var(--gray);
     }
-    footer.controls button { background: none; border: none; color: var(--gold); font-size: 1.5rem; cursor: pointer; }
+    footer.controls button {
+      background: none; border: none; color: var(--gold);
+      font-size: 1.5rem; cursor: pointer;
+    }
     footer.controls button.active { color: var(--blue); }
 
     #trackInfo { margin-top: 0.5rem; font-size: 0.9rem; color: #ccc; }
@@ -110,7 +120,8 @@
     <section id="section-Buscar" class="section">
       <div class="section-content">
         <h2>Buscar Música</h2>
-        <input type="text" id="searchInput" placeholder="Buscar..." style="width:100%; padding:0.5rem; border-radius:4px; border:1px solid var(--gray); background:var(--dark); color:#fff;">
+        <input type="text" id="searchInput" placeholder="Buscar..."
+               style="width:100%; padding:0.5rem; border-radius:4px; border:1px solid var(--gray); background:var(--dark); color:#fff;">
         <ul id="searchResults" class="simple-list" style="margin-top:1rem;"></ul>
       </div>
     </section>
@@ -125,8 +136,12 @@
     <section id="section-CrearBiblioteca" class="section">
       <div class="section-content">
         <h2>Crear Biblioteca</h2>
-        <input type="text" id="libraryName" placeholder="Nombre de la biblioteca" style="width:100%; padding:0.5rem; border-radius:4px; border:1px solid var(--gray); background:var(--dark); color:#fff;">
-        <button id="createLibraryBtn" style="margin-top:0.5rem; padding:0.75rem; width:100%; background:var(--blue); border:none; border-radius:4px; color:#fff; cursor:pointer;">Crear</button>
+        <input type="text" id="libraryName" placeholder="Nombre de la biblioteca"
+               style="width:100%; padding:0.5rem; border-radius:4px; border:1px solid var(--gray); background:var(--dark); color:#fff;">
+        <button id="createLibraryBtn"
+                style="margin-top:0.5rem; padding:0.75rem; width:100%; background:var(--blue); border:none; border-radius:4px; color:#fff; cursor:pointer;">
+          Crear
+        </button>
       </div>
     </section>
 
@@ -148,33 +163,33 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      const supabaseUrl  = 'https://vcybnzmoszsghajsoqvn.supabase.co';
-      const supabaseKey  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZjeWJuem1vc3pzZ2hhanNvcXZuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzMDQ2ODcsImV4cCI6MjA2MTg4MDY4N30.gp2j9MbiHGuhqQcvlzV8ljXXbVkvB1iuzZtJUVFdDBU';
-      const supabase     = window.supabase.createClient(supabaseUrl, supabaseKey);
+      const supabaseUrl = 'https://vcybnzmoszsghajsoqvn.supabase.co';
+      const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZjeWJuem1vc3pzZ2hhanNvcXZuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzMDQ2ODcsImV4cCI6MjA2MTg4MDY4N30.gp2j9MbiHGuhqQcvlzV8ljXXbVkvB1iuzZtJUVFdDBU';
+      const supabase    = window.supabase.createClient(supabaseUrl, supabaseKey);
 
-      // Elementos
-      const menuBtn   = document.getElementById('menuBtn');
-      const closeBtn  = document.getElementById('closeBtn');
-      const overlay   = document.getElementById('overlay');
-      const sidebar   = document.getElementById('sidebar');
-      const main      = document.getElementById('mainContent');
-      const navBtns   = document.querySelectorAll('.nav-btn');
-      const sections  = document.querySelectorAll('.section');
-      const fileInput = document.getElementById('fileUpload');
-      const uploadBtn = document.getElementById('uploadBtn');
-      const audio     = document.getElementById('audio-player');
-      const trackInfo = document.getElementById('trackInfo');
-      const recentList= document.getElementById('recentList');
+      // Elementos del DOM
+      const menuBtn       = document.getElementById('menuBtn');
+      const closeBtn      = document.getElementById('closeBtn');
+      const overlay       = document.getElementById('overlay');
+      const sidebar       = document.getElementById('sidebar');
+      const main          = document.getElementById('mainContent');
+      const navBtns       = document.querySelectorAll('.nav-btn');
+      const sections      = document.querySelectorAll('.section');
+      const fileInput     = document.getElementById('fileUpload');
+      const uploadBtn     = document.getElementById('uploadBtn');
+      const audio         = document.getElementById('audio-player');
+      const trackInfo     = document.getElementById('trackInfo');
+      const recentList    = document.getElementById('recentList');
       const searchInput   = document.getElementById('searchInput');
       const searchResults = document.getElementById('searchResults');
-      const libraryName     = document.getElementById('libraryName');
-      const createLibraryBtn= document.getElementById('createLibraryBtn');
-      const libraryList     = document.getElementById('libraryList');
-      const favoritesList   = document.getElementById('favoritesList');
-      const shuffleBtn      = document.getElementById('shuffleBtn');
-      const repeatBtn       = document.getElementById('repeatBtn');
-      const playPauseBtn    = document.getElementById('playPauseBtn');
-      const speedBtn        = document.getElementById('speedBtn');
+      const libraryName   = document.getElementById('libraryName');
+      const createLibraryBtn = document.getElementById('createLibraryBtn');
+      const libraryList   = document.getElementById('libraryList');
+      const favoritesList = document.getElementById('favoritesList');
+      const shuffleBtn    = document.getElementById('shuffleBtn');
+      const repeatBtn     = document.getElementById('repeatBtn');
+      const playPauseBtn  = document.getElementById('playPauseBtn');
+      const speedBtn      = document.getElementById('speedBtn');
 
       // Inicial menú cerrado
       sidebar.classList.remove('open');
@@ -182,9 +197,14 @@
       overlay.classList.remove('active');
       menuBtn.textContent = '☰';
 
-      let selectedFile = null, tracks = [], currentIndex = -1, isShuffling = false, playbackSpeed = 1;
+      // Estado de audio
+      let selectedFile = null,
+          tracks       = [],
+          currentIndex = -1,
+          isShuffling  = false,
+          playbackSpeed= 1;
 
-      // Abrir/cerrar menú
+      // Abrir/cerrar sidebar
       function toggleSidebar() {
         const open = sidebar.classList.toggle('open');
         main.classList.toggle('shifted', open);
@@ -193,10 +213,12 @@
       }
       menuBtn.addEventListener('click', toggleSidebar);
       closeBtn.addEventListener('click', toggleSidebar);
-      overlay.addEventListener('click', () => { if (sidebar.classList.contains('open')) toggleSidebar(); });
+      overlay.addEventListener('click', () => {
+        if (sidebar.classList.contains('open')) toggleSidebar();
+      });
       navBtns.forEach(btn => btn.addEventListener('click', () => {
-        navBtns.forEach(b=>b.classList.remove('active'));
-        sections.forEach(s=>s.classList.remove('active'));
+        navBtns.forEach(b => b.classList.remove('active'));
+        sections.forEach(s => s.classList.remove('active'));
         btn.classList.add('active');
         document.getElementById(btn.dataset.target).classList.add('active');
         if (sidebar.classList.contains('open')) toggleSidebar();
@@ -216,7 +238,7 @@
         }
       });
 
-      // Subir usando bucket "tracks"
+      // Subir usando bucket "tracks" y manejar RLS
       uploadBtn.addEventListener('click', async () => {
         if (!selectedFile) return;
         uploadBtn.disabled = true;
@@ -229,7 +251,15 @@
         if (error) {
           if (error.status === 404) {
             alert('Error: el bucket "tracks" no existe. Crea un bucket público llamado "tracks" en Supabase Storage.');
-          } else {
+          }
+          else if (error.message.includes('row-level security')) {
+            alert(
+              'Error: new row violates row-level security policy.\n' +
+              '→ Ve a tu panel Supabase → Storage → Policies → objects.\n' +
+              '→ Habilita la política de INSERT para usuarios autenticados.'
+            );
+          }
+          else {
             alert('Error al subir: ' + error.message);
           }
           uploadBtn.disabled = false;
@@ -277,7 +307,7 @@
           .join('');
       }
 
-      // Buscar
+      // Buscar en pistas cargadas
       searchInput.addEventListener('input', () => {
         const q = searchInput.value.toLowerCase();
         searchResults.innerHTML = tracks
@@ -302,7 +332,7 @@
       });
       loadLibraries();
 
-      // Favoritos
+      // Favoritos (doble clic)
       function loadFavorites() {
         const favs = JSON.parse(localStorage.getItem('favs')||'[]');
         favoritesList.innerHTML = favs.map(f=>`<li>${f}</li>`).join('');
