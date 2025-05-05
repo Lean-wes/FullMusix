@@ -158,7 +158,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     const supabaseUrl='https://bgjsqhicnacupnqmfvho.supabase.co';
-    const supabaseKey='YOUR_SUPABASE_ANON_KEY';
+    const supabaseKey='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJnanNxaGljbmFjdXBucW1mdmhvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzMzAxMzMsImV4cCI6MjA2MTkwNjEzM30.stuZwCskpXLPjBLPGLpzgkFjVYtq1pePyzXQUqdK2Pk';
     const supabaseClient=supabase.createClient(supabaseUrl,supabaseKey);window.loadLibraries=async()=>{
   const {data:items,error}=await supabaseClient.storage.from('tracks').list('',{limit:100});
   if(error)return console.error(error);
