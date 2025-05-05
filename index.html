@@ -210,7 +210,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const { error } = await supabase.auth.signInWithOAuth({
   provider: 'google',
   options: {
-    redirectTo: 'https://lean‑wes.github.io/FullMusix/'
+    redirectTo: 'https://lean-wes.github.io/FullMusix/'
       }
     })
         if (error) console.error('Error autenticación Google:', error.message);
