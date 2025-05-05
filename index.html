@@ -345,20 +345,38 @@ document.addEventListener('DOMContentLoaded', () => {
   loadFavorites();
 });
 
-    async function cargarAudio() {
+        async function cargarCanciones() {
       const { data, error } = await supabase
         .storage
         .from('tracks')
-        .getPublicUrl('...Mp3');
+        .list('', { limit: 100 });
 
-      if (data?.publicUrl) {
-        document.getElementById('player').src = data.publicUrl;
-      } else {
-        console.error("Error al obtener la URL", error);
+      if (error) {
+        console.error("Error al listar canciones:", error);
+        return;
       }
+
+      const lista = document.getElementById('lista-canciones');
+      const reproductor = document.getElementById('reproductor');
+
+      data.forEach(async (item) => {
+        const { data: urlData } = await supabase
+          .storage
+          .from('tracks')
+          .getPublicUrl(item.name);
+
+        const li = document.createElement('li');
+        li.textContent = item.name;
+        li.style.cursor = 'pointer';
+        li.onclick = () => {
+          reproductor.src = urlData.publicUrl;
+          reproductor.play();
+        };
+        lista.appendChild(li);
+      });
     }
 
-    cargarAudio();
+    cargarCanciones();
     
   </script>
 </body>
