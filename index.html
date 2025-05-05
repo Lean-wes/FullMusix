@@ -349,7 +349,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const { data, error } = await supabase
         .storage
         .from('tracks')
-        .getPublicUrl('Senta e Cala a Boca(1080P_HD)(mp3).mp3');
+        .getPublicUrl('...Mp3');
 
       if (data?.publicUrl) {
         document.getElementById('player').src = data.publicUrl;
