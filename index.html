@@ -152,7 +152,7 @@
     </header>
     <aside id="sidebar">
       <button id="closeBtn" aria-label="Ocultar menú">⫷</button>
-    <nav>
+      <nav>
         <ul>
           <li><button class="nav-btn active" data-target="section-Inicio">Inicio</button></li>
           <li><button class="nav-btn" data-target="section-Recientes">Recientes</button></li>
@@ -191,193 +191,210 @@
   <script>
     const supabaseUrl = 'https://bgjsqhicnacupnqmfvho.supabase.co';
     const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJnanNxaGljbmFjdXBucW1mdmhvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzMzAxMzMsImV4cCI6MjA2MTkwNjEzM30.stuZwCskpXLPjBLPGLpzgkFjVYtq1pePyzXQUqdK2Pk';
-    const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);function showApp() {
-  document.getElementById('loginWrapper').style.display = 'none';
-  document.getElementById('appWrapper').style.display = 'block';
-}
+    const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
-document.addEventListener('DOMContentLoaded', () => {
-  // Verificar sesión activa
-  supabase.auth.getSession().then(({ data: { session } }) => {
-    if (session) {
-      showApp();
+    function showApp() {
+      document.getElementById('loginWrapper').style.display = 'none';
+      document.getElementById('appWrapper').style.display = 'block';
     }
-  });
 
-  // Autenticación con Google
-  document.querySelectorAll('.google-btn').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      const { error } = await supabase.auth.signInWithOAuth({
-  provider: 'google',
-  options: {
-    redirectTo: 'https://lean-wes.github.io/FullMusix/'
-      }
-    })
-        if (error) console.error('Error autenticación Google:', error.message);
-    });
-  });
-
-  // Lógica de tabs login/register
-  const tabs = document.querySelectorAll('.tab');
-  const forms = document.querySelectorAll('.login-container form');
-  tabs.forEach(tab => tab.addEventListener('click', () => {
-    tabs.forEach(t => t.classList.toggle('active', t === tab));
-    forms.forEach(f => f.classList.toggle('active', f.id === tab.dataset.tab));
-  }));
-
-  // Toggle visibilidad contraseña
-  ['Login', 'Register', 'Confirm'].forEach(type => {
-    const emoji = document.getElementById('toggle' + type + 'Emoji');
-    const input = document.getElementById(type.toLowerCase() + 'Password');
-    emoji.addEventListener('click', () => {
-      const show = input.type === 'password';
-      input.type = show ? 'text' : 'password';
-      emoji.textContent = show ? '🤫' : '🤐';
-    });
-  });
-
-  // Registro local (localStorage)
-  document.getElementById('register').addEventListener('submit', e => {
-    e.preventDefault();
-    const email = document.getElementById('registerEmail').value;
-    const pwd = document.getElementById('registerPassword').value;
-    const conf = document.getElementById('confirmPassword').value;
-    if (pwd !== conf) return alert('Las contraseñas no coinciden');
-    localStorage.setItem('user', JSON.stringify({ email, password: pwd }));
-    alert('Registrado con éxito');
-    tabs[0].click();
-  });
-
-  // Login local
-  document.getElementById('login').addEventListener('submit', e => {
-    e.preventDefault();
-    const u = JSON.parse(localStorage.getItem('user') || '{}');
-    const email = document.getElementById('loginEmail').value;
-    const pwd = document.getElementById('loginPassword').value;
-    if (u.email === email && u.password === pwd) {
-      showApp();
-    } else {
-      alert('Credenciales incorrectas');
-    }
-  });
-
-  // Resto de lógica de la aplicación (sidebar, reproductor,.storage, etc.)
-  const menuBtn = document.getElementById('menuBtn');
-  const closeBtn = document.getElementById('closeBtn');
-  const overlay = document.getElementById('overlay');
-  const sidebar = document.getElementById('sidebar');
-  const main = document.getElementById('mainContent');
-  const navBtns = document.querySelectorAll('.nav-btn');
-  const sections = document.querySelectorAll('.section');
-  const fileInput = document.getElementById('fileUpload');
-  const uploadBtn = document.getElementById('uploadBtn');
-  const audio = document.getElementById('audio-player');
-  const trackInfo = document.getElementById('trackInfo');
-  const recentList = document.getElementById('recentList');
-  const searchInput = document.getElementById('searchInput');
-  const searchResults = document.getElementById('searchResults');
-  const libraryName = document.getElementById('libraryName');
-  const createLibraryBtn = document.getElementById('createLibraryBtn');
-  const libraryList = document.getElementById('libraryList');
-  const favoritesList = document.getElementById('favoritesList');
-  const shuffleBtn = document.getElementById('shuffleBtn');
-  const repeatBtn = document.getElementById('repeatBtn');
-  const playPauseBtn = document.getElementById('playPauseBtn');
-  const speedBtn = document.getElementById('speedBtn');
-  let selectedFile = null, tracks = [], currentIndex = -1, isShuffling = false, playbackSpeed = 1;
-  function toggleSidebar() {
-    const open = !sidebar.classList.toggle('open');
-    main.classList.toggle('shifted', !open);
-    overlay.classList.toggle('active', !open);
-  }
-  menuBtn.addEventListener('click', toggleSidebar);
-  closeBtn.addEventListener('click', toggleSidebar);
-  overlay.addEventListener('click', () => sidebar.classList.contains('open') && toggleSidebar());
-  navBtns.forEach(btn => btn.addEventListener('click', () => {
-    navBtns.forEach(b => b.classList.remove('active'));
-    sections.forEach(s => s.classList.remove('active'));
-    btn.classList.add('active');
-    document.getElementById(btn.dataset.target).classList.add('active');
-    toggleSidebar();
-  }));
-  fileInput.addEventListener('change', () => {
-    selectedFile = fileInput.files[0] || null;
-    if (selectedFile) {
-      audio.src = URL.createObjectURL(selectedFile);
-      trackInfo.textContent = selectedFile.name;
-      uploadBtn.disabled = false;
-    } else {
-      uploadBtn.disabled = true;
-      audio.removeAttribute('src');
-      trackInfo.textContent = 'Sin pista seleccionada';
-    }
-  });
-  uploadBtn.addEventListener('click', async () => {
-    if (!selectedFile) return;
-    uploadBtn.disabled = true;
-    const path = `tracks/${Date.now()}_${selectedFile.name}`;
-    const { data, error } = await supabase.storage.from('tracks').upload(path, selectedFile, { upsert: true });
-    if (error) {
-      alert('Error al subir: ' + error.message);
-      uploadBtn.disabled = false;
-      return;
-    }
-    const url = `${supabaseUrl}/storage/v1/object/public/tracks/${path}`;
-    tracks.push({ name: selectedFile.name, url });
-    currentIndex = tracks.length - 1;
-    renderRecents();
-    playTrack(currentIndex);
-    fileInput.value = '';
-  });
-  function playTrack(i) { if (!tracks[i]) return; const t = tracks[i]; audio.src = t.url; audio.playbackRate = playbackSpeed; audio.play(); trackInfo.textContent = t.name; }
-  audio.addEventListener('ended', () => { currentIndex = isShuffling ? Math.floor(Math.random() * tracks.length) : (currentIndex + 1) % tracks.length; playTrack(currentIndex); });
-  shuffleBtn.addEventListener('click', () => isShuffling = !shuffleBtn.classList.toggle('active', isShuffling));
-  repeatBtn.addEventListener('click', () => audio.loop = !repeatBtn.classList.toggle('active', audio.loop));
-  playPauseBtn.addEventListener('click', () => audio.paused ? audio.play() : audio.pause());
-  speedBtn.addEventListener('click', () => { playbackSpeed = playbackSpeed === 1 ? 1.5 : playbackSpeed === 1.5 ? 2 : 1; audio.playbackRate = playbackSpeed; speedBtn.textContent = playbackSpeed + 'x'; });
-  function renderRecents() { recentList.innerHTML = tracks.map((t, i) => `<li><button onclick="playTrack(${i})">${t.name}</button></li>`).join(''); }
-  searchInput.addEventListener('input', () => { const q = searchInput.value.toLowerCase(); searchResults.innerHTML = tracks.filter(t => t.name.toLowerCase().includes(q)).map((t, i) => `<li><button onclick="playTrack(${i})">${t.name}</button></li>`).join(''); });
-  function loadLibraries() { const libs = JSON.parse(localStorage.getItem('libs') || '[]'); libraryList.innerHTML = libs.map(l => `<li>${l}</li>`).join(''); }
-  createLibraryBtn.addEventListener('click', () => { const name = libraryName.value.trim(); if (!name) return alert('Ingresa un nombre válido'); const libs = JSON.parse(localStorage.getItem('libs') || '[]'); libs.push(name); localStorage.setItem('libs', JSON.stringify(libs)); libraryName.value = ''; loadLibraries(); });
-  loadLibraries();
-  function loadFavorites() { const favs = JSON.parse(localStorage.getItem('favs') || '[]'); favoritesList.innerHTML = favs.map(f => `<li>${f}</li>`).join(''); }
-  audio.addEventListener('dblclick', () => { const name = trackInfo.textContent; if (!name) return; const favs = JSON.parse(localStorage.getItem('favs') || '[]'); if (!favs.includes(name)) favs.push(name); localStorage.setItem('favs', JSON.stringify(favs)); loadFavorites(); });
-  loadFavorites();
-});
-
-        async function cargarCanciones() {
-      const { data, error } = await supabase
-        .storage
-        .from('tracks')
-        .list('', { limit: 100 });
-
-      if (error) {
-        console.error("Error al listar canciones:", error);
-        return;
-      }
-
-      const lista = document.getElementById('lista-canciones');
-      const reproductor = document.getElementById('reproductor');
-
-      data.forEach(async (item) => {
-        const { data: urlData } = await supabase
-          .storage
-          .from('tracks')
-          .getPublicUrl(item.name);
-
-        const li = document.createElement('li');
-        li.textContent = item.name;
-        li.style.cursor = 'pointer';
-        li.onclick = () => {
-          reproductor.src = urlData.publicUrl;
-          reproductor.play();
-        };
-        lista.appendChild(li);
+    document.addEventListener('DOMContentLoaded', () => {
+      // Verificar sesión activa
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session) showApp();
       });
-    }
 
-    cargarCanciones();
-    
+      // Autenticación con Google
+      document.querySelectorAll('.google-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const { error } = await supabase.auth.signInWithOAuth({
+            provider: 'google',
+            options: { redirectTo: 'https://lean-wes.github.io/FullMusix/' }
+          });
+          if (error) console.error('Error autenticación Google:', error.message);
+        });
+      });
+
+      // Lógica de tabs login/register
+      const tabs = document.querySelectorAll('.tab');
+      const forms = document.querySelectorAll('.login-container form');
+      tabs.forEach(tab => tab.addEventListener('click', () => {
+        tabs.forEach(t => t.classList.toggle('active', t === tab));
+        forms.forEach(f => f.classList.toggle('active', f.id === tab.dataset.tab));
+      }));
+
+      // Toggle visibilidad contraseña
+      ['Login','Register','Confirm'].forEach(type => {
+        const emoji = document.getElementById('toggle'+type+'Emoji');
+        const input = document.getElementById(type.toLowerCase()+'Password');
+        emoji.addEventListener('click', () => {
+          const show = input.type === 'password';
+          input.type = show?'text':'password';
+          emoji.textContent = show?'🤫':'🤐';
+        });
+      });
+
+      // Registro con Supabase
+      document.getElementById('register').addEventListener('submit', async e => {
+        e.preventDefault();
+        const email = document.getElementById('registerEmail').value;
+        const pwd = document.getElementById('registerPassword').value;
+        const conf = document.getElementById('confirmPassword').value;
+        if (pwd !== conf) return alert('Las contraseñas no coinciden');
+        const { error } = await supabase.auth.signUp({ email, password: pwd });
+        if (error) {
+          return alert('Error registro: ' + error.message);
+        }
+        alert('Registrado con éxito. Por favor revisa tu correo para confirmar.');
+        tabs[0].click();
+      });
+
+      // Login con Supabase
+      document.getElementById('login').addEventListener('submit', async e => {
+        e.preventDefault();
+        const email = document.getElementById('loginEmail').value;
+        const pwd = document.getElementById('loginPassword').value;
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password: pwd });
+        if (error) {
+          return alert('Credenciales incorrectas o error: ' + error.message);
+        }
+        showApp();
+      });
+
+      // Lógica de la aplicación restante...
+      // (sidebar, reproductor, lista, búsqueda, bibliotecas y favoritos)
+      const menuBtn = document.getElementById('menuBtn');
+      const closeBtn = document.getElementById('closeBtn');
+      const overlay = document.getElementById('overlay');
+      const sidebar = document.getElementById('sidebar');
+      const main = document.getElementById('mainContent');
+      const navBtns = document.querySelectorAll('.nav-btn');
+      const sections = document.querySelectorAll('.section');
+      const fileInput = document.getElementById('fileUpload');
+      const uploadBtn = document.getElementById('uploadBtn');
+      const audio = document.getElementById('audio-player');
+      const trackInfo = document.getElementById('trackInfo');
+      const recentList = document.getElementById('recentList');
+      const searchInput = document.getElementById('searchInput');
+      const searchResults = document.getElementById('searchResults');
+      const libraryName = document.getElementById('libraryName');
+      const createLibraryBtn = document.getElementById('createLibraryBtn');
+      const libraryList = document.getElementById('libraryList');
+      const favoritesList = document.getElementById('favoritesList');
+      let tracks = [], currentIndex = -1, isShuffling = false, playbackSpeed = 1;
+
+      function toggleSidebar() {
+        const open = !sidebar.classList.toggle('open');
+        main.classList.toggle('shifted', !open);
+        overlay.classList.toggle('active', !open);
+      }
+      menuBtn.addEventListener('click', toggleSidebar);
+      closeBtn.addEventListener('click', toggleSidebar);
+      overlay.addEventListener('click', () => sidebar.classList.contains('open') && toggleSidebar());
+      navBtns.forEach(btn => btn.addEventListener('click', () => {
+        navBtns.forEach(b => b.classList.remove('active'));
+        sections.forEach(s => s.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById(btn.dataset.target).classList.add('active');
+        toggleSidebar();
+      }));
+      fileInput.addEventListener('change', () => {
+        const selectedFile = fileInput.files[0] || null;
+        if (selectedFile) {
+          audio.src = URL.createObjectURL(selectedFile);
+          trackInfo.textContent = selectedFile.name;
+          uploadBtn.disabled = false;
+        } else {
+          uploadBtn.disabled = true;
+          audio.removeAttribute('src');
+          trackInfo.textContent = 'Sin pista seleccionada';
+        }
+      });
+      uploadBtn.addEventListener('click', async () => {
+        const selectedFile = fileInput.files[0];
+        if (!selectedFile) return;
+        uploadBtn.disabled = true;
+        const path = `tracks/${Date.now()}_${selectedFile.name}`;
+        const { data, error } = await supabase.storage.from('tracks').upload(path, selectedFile, { upsert: true });
+        if (error) {
+          alert('Error al subir: ' + error.message);
+          uploadBtn.disabled = false;
+          return;
+        }
+        const url = `${supabaseUrl}/storage/v1/object/public/tracks/${path}`;
+        tracks.push({ name: selectedFile.name, url });
+        currentIndex = tracks.length - 1;
+        renderRecents();
+        playTrack(currentIndex);
+        fileInput.value = '';
+      });
+      function playTrack(i) {
+        if (!tracks[i]) return;
+        const t = tracks[i];
+        audio.src = t.url;
+        audio.playbackRate = playbackSpeed;
+        audio.play();
+        trackInfo.textContent = t.name;
+      }
+      audio.addEventListener('ended', () => {
+        currentIndex = isShuffling
+          ? Math.floor(Math.random() * tracks.length)
+          : (currentIndex + 1) % tracks.length;
+        playTrack(currentIndex);
+      });
+      document.getElementById('shuffleBtn').addEventListener('click', () => {
+        isShuffling = !document.getElementById('shuffleBtn').classList.toggle('active', isShuffling);
+      });
+      document.getElementById('repeatBtn').addEventListener('click', () => {
+        audio.loop = !document.getElementById('repeatBtn').classList.toggle('active', audio.loop);
+      });
+      document.getElementById('playPauseBtn').addEventListener('click', () => {
+        audio.paused ? audio.play() : audio.pause();
+      });
+      document.getElementById('speedBtn').addEventListener('click', () => {
+        playbackSpeed = playbackSpeed === 1 ? 1.5 : playbackSpeed === 1.5 ? 2 : 1;
+        audio.playbackRate = playbackSpeed;
+        document.getElementById('speedBtn').textContent = playbackSpeed + 'x';
+      });
+      function renderRecents() {
+        recentList.innerHTML = tracks.map((t,i) => `<li><button onclick="playTrack(${i})">${t.name}</button></li>`).join('');
+      }
+      searchInput.addEventListener('input', () => {
+        const q = searchInput.value.toLowerCase();
+        searchResults.innerHTML = tracks
+          .filter(t => t.name.toLowerCase().includes(q))
+          .map((t,i) => `<li><button onclick="playTrack(${i})">${t.name}</button></li>`)
+          .join('');
+      });
+      function loadLibraries() {
+        const libs = JSON.parse(localStorage.getItem('libs') || '[]');
+        libraryList.innerHTML = libs.map(l => `<li>${l}</li>`).join('');
+      }
+      createLibraryBtn.addEventListener('click', () => {
+        const name = libraryName.value.trim();
+        if (!name) return alert('Ingresa un nombre válido');
+        const libs = JSON.parse(localStorage.getItem('libs') || '[]');
+        libs.push(name);
+        localStorage.setItem('libs', JSON.stringify(libs));
+        libraryName.value = '';
+        loadLibraries();
+      });
+      loadLibraries();
+      function loadFavorites() {
+        const favs = JSON.parse(localStorage.getItem('favs') || '[]');
+        favoritesList.innerHTML = favs.map(f => `<li>${f}</li>`).join('');
+      }
+      audio.addEventListener('dblclick', () => {
+        const name = trackInfo.textContent;
+        if (!name) return;
+        const favs = JSON.parse(localStorage.getItem('favs') || '[]');
+        if (!favs.includes(name)) favs.push(name);
+        localStorage.setItem('favs', JSON.stringify(favs));
+        loadFavorites();
+      });
+      loadFavorites();
+
+    });
   </script>
 </body>
-  </html>
+</html>
