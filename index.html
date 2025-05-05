@@ -345,6 +345,26 @@ document.addEventListener('DOMContentLoaded', () => {
   loadFavorites();
 });
 
+    async function cargarAudio() {
+      const { data, error } = await supabase
+        .storage
+        .from('tracks')
+        .getPublicUrl('Senta e Cala a Boca(1080P_HD)(mp3).mp3');
+
+      if (data?.publicUrl) {
+        document.getElementById('player').src = data.publicUrl;
+      } else {
+        console.error("Error al obtener la URL", error);
+      }
+    }
+
+    cargarAudio();
+    
   </script>
 </body>
 </html>
+
+
+
+
+
