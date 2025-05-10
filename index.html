@@ -1283,7 +1283,28 @@
                 alert("¡Bienvenido a 𝐅𝐮𝐥𝐥 𝐌ยรเא! Para comenzar, agrega canciones desde la pestaña Biblioteca.");
             }, 1000);
         });
-  
+  document.addEventListener('DOMContentLoaded', function() {
+    // ... tu código actual ...
+
+    // 1. Mostrar confirmación al intentar recargar o cerrar la página
+    window.addEventListener('beforeunload', function(e) {
+      // La mayoría de navegadores modernos ignoran custom messages y muestran uno genérico
+      e.preventDefault();
+      e.returnValue = '';
+    });
+
+    // 2. Bloquear F5 y Ctrl+R / ⌘+R
+    document.addEventListener('keydown', function(e) {
+      // key === 'F5'
+      if (e.key === 'F5') {
+        e.preventDefault();
+      }
+      // Ctrl+R (Windows/Linux) o ⌘+R (Mac)
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'r') {
+        e.preventDefault();
+      }
+    });
+  });
     </script>
  </body>
 </html>
