@@ -1,0 +1,2312 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Full Musik - Reproductor de música</title>
+    
+    <!-- Estilos CSS -->
+    <style>
+        :root {
+            --color-primary: #8c52ff;
+            --color-secondary: #5e17eb;
+            --color-accent: #ff5252;
+            --color-background: #0f172a;
+            --color-surface: #1e293b;
+            --color-text: #f8fafc;
+            --color-text-secondary: #94a3b8;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            background-color: var(--color-background);
+            color: var(--color-text);
+            line-height: 1.5;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+        
+        .welcome-screen {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(to right, var(--color-primary), var(--color-accent));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        
+        p {
+            font-size: 1.25rem;
+            margin-bottom: 2rem;
+            color: var(--color-text-secondary);
+        }
+        
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.75rem 1.5rem;
+            border-radius: 9999px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+            text-decoration: none;
+            gap: 0.5rem;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(45deg, var(--color-primary), var(--color-secondary));
+            color: white;
+            border: none;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(94, 23, 235, 0.4);
+        }
+
+        .app-features {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+        
+        .feature-card {
+            background-color: var(--color-surface);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            max-width: 300px;
+            text-align: left;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        
+        .feature-card h3 {
+            font-size: 1.25rem;
+            margin-bottom: 0.5rem;
+            color: var(--color-primary);
+        }
+        
+        .feature-card p {
+            font-size: 0.875rem;
+            margin-bottom: 0;
+        }
+        
+        .feature-icon {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: var(--color-accent);
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        /* Aplicación de música (se mostrará después de la autenticación) */
+        #app-container {
+            width: 100%;
+            display: none;
+        }
+        
+        /* Estilos para el reproductor de música */
+        .music-player {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            max-width: 1000px;
+            margin: 0 auto;
+            background-color: var(--color-surface);
+            border-radius: 1rem;
+            overflow: hidden;
+        }
+        
+        .player-header {
+            display: flex;
+            justify-content: space-between;
+            padding: 1rem;
+            background-color: rgba(15, 23, 42, 0.8);
+        }
+        
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .tab {
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            border-radius: 0.5rem;
+            font-weight: 500;
+        }
+        
+        .tab.active {
+            background-color: var(--color-primary);
+            color: white;
+        }
+        
+        .tab:hover:not(.active) {
+            background-color: rgba(140, 82, 255, 0.1);
+        }
+        
+        .player-content {
+            padding: 1.5rem;
+            min-height: 500px;
+        }
+        
+        .song-info {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .song-artwork {
+            width: 150px;
+            height: 150px;
+            background-color: rgba(15, 23, 42, 0.5);
+            border-radius: 0.5rem;
+            overflow: hidden;
+        }
+        
+        .song-artwork img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .song-details {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        .song-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+        
+        .song-artist {
+            color: var(--color-text-secondary);
+            margin-bottom: 1rem;
+        }
+        
+        .player-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .progress-container {
+            width: 100%;
+            height: 6px;
+            background-color: rgba(148, 163, 184, 0.2);
+            border-radius: 3px;
+            cursor: pointer;
+            position: relative;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background-color: var(--color-primary);
+            border-radius: 3px;
+            width: 30%;
+        }
+        
+        .time-display {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            color: var(--color-text-secondary);
+            margin-top: 0.25rem;
+        }
+        
+        .controls-buttons {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+        
+        .control-btn {
+            background: none;
+            border: none;
+            color: var(--color-text);
+            cursor: pointer;
+            font-size: 1.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            transition: all 0.2s ease;
+        }
+        
+        .control-btn:hover {
+            background-color: rgba(148, 163, 184, 0.1);
+        }
+        
+        .play-btn {
+            background-color: var(--color-primary);
+            font-size: 1.5rem;
+            width: 50px;
+            height: 50px;
+        }
+        
+        .play-btn:hover {
+            background-color: var(--color-secondary);
+            transform: scale(1.05);
+        }
+        
+        .volume-container {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+        
+        .volume-icon {
+            color: var(--color-text-secondary);
+        }
+        
+        .volume-slider {
+            width: 100px;
+            height: 4px;
+            background-color: rgba(148, 163, 184, 0.2);
+            border-radius: 2px;
+            cursor: pointer;
+            position: relative;
+        }
+        
+        .volume-level {
+            height: 100%;
+            background-color: var(--color-primary);
+            border-radius: 2px;
+            width: 70%;
+        }
+        
+        /* Estilo para la biblioteca de canciones */
+        .library-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+        
+        .song-card {
+            background-color: rgba(15, 23, 42, 0.5);
+            border-radius: 0.5rem;
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+        
+        .song-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .song-card-artwork {
+            width: 100%;
+            aspect-ratio: 1;
+            background-color: rgba(15, 23, 42, 0.8);
+        }
+        
+        .song-card-artwork img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .song-card-info {
+            padding: 0.75rem;
+        }
+        
+        .song-card-title {
+            font-weight: 600;
+            font-size: 0.875rem;
+            margin-bottom: 0.25rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .song-card-artist {
+            color: var(--color-text-secondary);
+            font-size: 0.75rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        /* Estilo para las playlists */
+        .playlist-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .playlist-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+        
+        .playlist-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+        
+        .playlist-card {
+            background-color: rgba(15, 23, 42, 0.5);
+            border-radius: 0.5rem;
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+        
+        .playlist-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .playlist-card-artwork {
+            width: 100%;
+            aspect-ratio: 1;
+            background-color: rgba(15, 23, 42, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            color: var(--color-primary);
+        }
+        
+        .playlist-card-info {
+            padding: 0.75rem;
+        }
+        
+        .playlist-card-title {
+            font-weight: 600;
+            font-size: 0.875rem;
+            margin-bottom: 0.25rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .playlist-card-count {
+            color: var(--color-text-secondary);
+            font-size: 0.75rem;
+        }
+        
+        /* Estilo para el ecualizador */
+        .equalizer-container {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+        
+        .equalizer-bars {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            height: 150px;
+            padding: 0 1rem;
+        }
+        
+        .eq-bar {
+            width: 10px;
+            background-color: var(--color-primary);
+            border-radius: 5px 5px 0 0;
+            transition: height 0.2s ease;
+        }
+        
+        .eq-sliders {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .eq-slider-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .eq-slider {
+            height: 150px;
+            width: 4px;
+            background-color: rgba(148, 163, 184, 0.2);
+            border-radius: 2px;
+            position: relative;
+        }
+        
+        .eq-slider-thumb {
+            width: 16px;
+            height: 16px;
+            background-color: var(--color-primary);
+            border-radius: 50%;
+            position: absolute;
+            left: 50%;
+            transform: translate(-50%, 50%);
+            cursor: pointer;
+        }
+        
+        .eq-slider-value {
+            font-size: 0.75rem;
+            color: var(--color-text-secondary);
+        }
+        
+        .eq-slider-freq {
+            font-size: 0.75rem;
+            color: var(--color-text-secondary);
+        }
+        
+        .eq-presets {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 1rem;
+        }
+        
+        .eq-preset-btn {
+            background-color: rgba(15, 23, 42, 0.5);
+            border: 1px solid var(--color-primary);
+            color: var(--color-text);
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .eq-preset-btn:hover, .eq-preset-btn.active {
+            background-color: var(--color-primary);
+            color: white;
+        }
+        
+        /* Modales */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .modal-content {
+            background-color: var(--color-surface);
+            border-radius: 1rem;
+            padding: 2rem;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            transform: translateY(20px);
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+        
+        .modal-overlay.active .modal-content {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--color-text-secondary);
+            cursor: pointer;
+            font-size: 1.5rem;
+        }
+        
+        .modal-close:hover {
+            color: var(--color-text);
+        }
+        
+        .auth-options {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .auth-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            background-color: transparent;
+            color: var(--color-text);
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            gap: 0.5rem;
+        }
+        
+        .auth-btn:hover {
+            background-color: rgba(148, 163, 184, 0.1);
+        }
+        
+        .google-btn {
+            background-color: white;
+            color: #333;
+        }
+        
+        .google-btn:hover {
+            background-color: #f1f1f1;
+        }
+        
+        /* Carga y notificaciones */
+        .loader {
+            width: 48px;
+            height: 48px;
+            border: 5px solid var(--color-text-secondary);
+            border-bottom-color: var(--color-primary);
+            border-radius: 50%;
+            box-sizing: border-box;
+            animation: rotation 1s linear infinite;
+            display: none;
+        }
+        
+        @keyframes rotation {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+        
+        .loading .loader {
+            display: inline-block;
+        }
+        
+        .loading-text {
+            margin-top: 1rem;
+            color: var(--color-text-secondary);
+            display: none;
+        }
+        
+        .loading .loading-text {
+            display: block;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            background-color: var(--color-surface);
+            color: var(--color-text);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            z-index: 1000;
+            transform: translateX(120%);
+            transition: all 0.3s ease;
+        }
+        
+        .notification.active {
+            transform: translateX(0);
+        }
+        
+        .notification-success {
+            border-left: 4px solid #10b981;
+        }
+        
+        .notification-error {
+            border-left: 4px solid #ef4444;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .song-info {
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+            }
+            
+            .controls-buttons {
+                gap: 1rem;
+            }
+            
+            .player-header {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .tabs {
+                width: 100%;
+                justify-content: space-between;
+            }
+            
+            .app-features {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+    
+    <!-- Iconos para la interfaz -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- Supabase JS SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- Pantalla de bienvenida -->
+        <div id="welcome-screen" class="welcome-screen">
+            <h1>Full Musik</h1>
+            <p>Tu reproductor de música en la nube con autenticación de Google y biblioteca personalizable</p>
+            <button id="login-btn" class="btn btn-primary">
+                <i class="fab fa-google"></i> Iniciar sesión con Google
+            </button>
+            
+            <div class="app-features">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-cloud"></i>
+                    </div>
+                    <h3>Música en la nube</h3>
+                    <p>Almacena y reproduce tu música desde cualquier dispositivo con sincronización en la nube.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-list"></i>
+                    </div>
+                    <h3>Playlists personalizadas</h3>
+                    <p>Crea tus propias listas de reproducción y organiza tu música como prefieras.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-sliders-h"></i>
+                    </div>
+                    <h3>Ecualizador avanzado</h3>
+                    <p>Personaliza tu experiencia auditiva con nuestro potente ecualizador de 10 bandas.</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Aplicación de música (se mostrará después del login) -->
+        <div id="app-container">
+            <div class="music-player">
+                <div class="player-header">
+                    <h2>Full Musik</h2>
+                    <div class="tabs">
+                        <div class="tab active" data-tab="player">Reproductor</div>
+                        <div class="tab" data-tab="library">Biblioteca</div>
+                        <div class="tab" data-tab="playlists">Playlists</div>
+                        <div class="tab" data-tab="equalizer">Ecualizador</div>
+                    </div>
+                    <div class="user-info">
+                        <span id="user-name"></span>
+                        <button id="logout-btn" class="btn btn-small">Salir</button>
+                    </div>
+                </div>
+                
+                <div class="player-content">
+                    <!-- Sección del reproductor -->
+                    <div id="player-tab" class="tab-content active">
+                        <div class="song-info">
+                            <div class="song-artwork">
+                                <img id="current-artwork" src="https://placehold.co/150x150/1e293b/8c52ff?text=Cover" alt="Artwork">
+                            </div>
+                            <div class="song-details">
+                                <div class="song-title" id="current-title">Selecciona una canción</div>
+                                <div class="song-artist" id="current-artist">-</div>
+                                <div class="player-controls">
+                                    <div class="progress-container" id="progress-container">
+                                        <div class="progress-bar" id="progress-bar"></div>
+                                    </div>
+                                    <div class="time-display">
+                                        <span id="current-time">0:00</span>
+                                        <span id="duration">0:00</span>
+                                    </div>
+                                    <div class="controls-buttons">
+                                        <button class="control-btn" id="shuffle-btn">
+                                            <i class="fas fa-random"></i>
+                                        </button>
+                                        <button class="control-btn" id="prev-btn">
+                                            <i class="fas fa-step-backward"></i>
+                                        </button>
+                                        <button class="control-btn play-btn" id="play-btn">
+                                            <i class="fas fa-play"></i>
+                                        </button>
+                                        <button class="control-btn" id="next-btn">
+                                            <i class="fas fa-step-forward"></i>
+                                        </button>
+                                        <button class="control-btn" id="repeat-btn">
+                                            <i class="fas fa-redo"></i>
+                                        </button>
+                                    </div>
+                                    <div class="volume-container">
+                                        <span class="volume-icon">
+                                            <i class="fas fa-volume-up"></i>
+                                        </span>
+                                        <div class="volume-slider" id="volume-slider">
+                                            <div class="volume-level" id="volume-level"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Sección de biblioteca -->
+                    <div id="library-tab" class="tab-content hidden">
+                        <div class="tab-header">
+                            <h3>Tu biblioteca</h3>
+                            <button id="upload-song-btn" class="btn btn-primary">
+                                <i class="fas fa-upload"></i> Subir música
+                            </button>
+                        </div>
+                        <div class="library-container" id="library-container">
+                            <!-- Las canciones se cargarán aquí dinámicamente -->
+                        </div>
+                    </div>
+                    
+                    <!-- Sección de playlists -->
+                    <div id="playlists-tab" class="tab-content hidden">
+                        <div class="playlist-header">
+                            <h3>Tus playlists</h3>
+                            <button id="create-playlist-btn" class="btn btn-primary">
+                                <i class="fas fa-plus"></i> Nueva playlist
+                            </button>
+                        </div>
+                        <div class="playlist-container" id="playlist-container">
+                            <!-- Las playlists se cargarán aquí dinámicamente -->
+                        </div>
+                    </div>
+                    
+                    <!-- Sección del ecualizador -->
+                    <div id="equalizer-tab" class="tab-content hidden">
+                        <h3>Ecualizador</h3>
+                        <div class="equalizer-container">
+                            <div class="equalizer-bars" id="eq-visualizer">
+                                <!-- Las barras del visualizador se generarán dinámicamente -->
+                            </div>
+                            <div class="eq-sliders" id="eq-sliders">
+                                <!-- Los sliders del ecualizador se generarán dinámicamente -->
+                            </div>
+                            <div class="eq-presets" id="eq-presets">
+                                <button class="eq-preset-btn active" data-preset="flat">Plano</button>
+                                <button class="eq-preset-btn" data-preset="rock">Rock</button>
+                                <button class="eq-preset-btn" data-preset="pop">Pop</button>
+                                <button class="eq-preset-btn" data-preset="jazz">Jazz</button>
+                                <button class="eq-preset-btn" data-preset="classical">Clásica</button>
+                                <button class="eq-preset-btn" data-preset="bass">Bajo</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Modal de autenticación -->
+        <div id="auth-modal" class="modal-overlay">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="modal-title">Iniciar sesión</h3>
+                    <button class="modal-close" id="auth-modal-close">&times;</button>
+                </div>
+                <div class="auth-options">
+                    <button id="google-auth-btn" class="auth-btn google-btn">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" alt="Google" width="20" height="20">
+                        Continuar con Google
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Modal para subir canciones -->
+        <div id="upload-modal" class="modal-overlay">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="modal-title">Subir música</h3>
+                    <button class="modal-close" id="upload-modal-close">&times;</button>
+                </div>
+                <form id="upload-form">
+                    <div style="margin-bottom: 1rem;">
+                        <label for="song-file" style="display: block; margin-bottom: 0.5rem;">Archivo de audio</label>
+                        <input type="file" id="song-file" accept="audio/*" required style="width: 100%;">
+                    </div>
+                    <div style="margin-bottom: 1rem;">
+                        <label for="song-title" style="display: block; margin-bottom: 0.5rem;">Título</label>
+                        <input type="text" id="song-title" style="width: 100%; padding: 0.5rem; border-radius: 0.25rem; background-color: var(--color-background); color: var(--color-text); border: 1px solid rgba(148, 163, 184, 0.2);">
+                    </div>
+                    <div style="margin-bottom: 1rem;">
+                        <label for="song-artist" style="display: block; margin-bottom: 0.5rem;">Artista</label>
+                        <input type="text" id="song-artist" style="width: 100%; padding: 0.5rem; border-radius: 0.25rem; background-color: var(--color-background); color: var(--color-text); border: 1px solid rgba(148, 163, 184, 0.2);">
+                    </div>
+                    <div style="margin-bottom: 1rem;">
+                        <label for="song-cover" style="display: block; margin-bottom: 0.5rem;">Carátula (opcional)</label>
+                        <input type="file" id="song-cover" accept="image/*" style="width: 100%;">
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">Subir canción</button>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Modal para crear playlists -->
+        <div id="playlist-modal" class="modal-overlay">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="modal-title">Crear playlist</h3>
+                    <button class="modal-close" id="playlist-modal-close">&times;</button>
+                </div>
+                <form id="playlist-form">
+                    <div style="margin-bottom: 1rem;">
+                        <label for="playlist-name" style="display: block; margin-bottom: 0.5rem;">Nombre</label>
+                        <input type="text" id="playlist-name" required style="width: 100%; padding: 0.5rem; border-radius: 0.25rem; background-color: var(--color-background); color: var(--color-text); border: 1px solid rgba(148, 163, 184, 0.2);">
+                    </div>
+                    <div style="margin-bottom: 1rem;">
+                        <label for="playlist-description" style="display: block; margin-bottom: 0.5rem;">Descripción (opcional)</label>
+                        <textarea id="playlist-description" style="width: 100%; padding: 0.5rem; border-radius: 0.25rem; background-color: var(--color-background); color: var(--color-text); border: 1px solid rgba(148, 163, 184, 0.2); resize: vertical;"></textarea>
+                    </div>
+                    <div style="margin-bottom: 1rem;">
+                        <label for="playlist-cover" style="display: block; margin-bottom: 0.5rem;">Carátula (opcional)</label>
+                        <input type="file" id="playlist-cover" accept="image/*" style="width: 100%;">
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">Crear playlist</button>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Notifications -->
+        <div id="notification" class="notification">
+            <span id="notification-message"></span>
+        </div>
+        
+        <!-- Audio element (hidden) -->
+        <audio id="audio-player"></audio>
+    </div>
+    
+    <!-- JavaScript -->
+    <script>
+        // Variables globales para Supabase y estado de la aplicación
+        let supabaseClient;
+        let currentUser = null;
+        let currentSession = null;
+        let songs = [];
+        let playlists = [];
+        let currentPlaylist = null;
+        let queue = [];
+        let currentSongIndex = -1;
+        let isPlaying = false;
+        let shuffle = false;
+        let repeat = false;
+        
+        // Elementos del DOM
+        const welcomeScreen = document.getElementById('welcome-screen');
+        const appContainer = document.getElementById('app-container');
+        const loginBtn = document.getElementById('login-btn');
+        const logoutBtn = document.getElementById('logout-btn');
+        const userName = document.getElementById('user-name');
+        const audioPlayer = document.getElementById('audio-player');
+        const libraryContainer = document.getElementById('library-container');
+        const playlistContainer = document.getElementById('playlist-container');
+        
+        // Elementos de los tabs
+        const tabs = document.querySelectorAll('.tab');
+        const tabContents = document.querySelectorAll('.tab-content');
+        
+        // Elementos del reproductor
+        const playBtn = document.getElementById('play-btn');
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const shuffleBtn = document.getElementById('shuffle-btn');
+        const repeatBtn = document.getElementById('repeat-btn');
+        const progressBar = document.getElementById('progress-bar');
+        const progressContainer = document.getElementById('progress-container');
+        const currentTime = document.getElementById('current-time');
+        const duration = document.getElementById('duration');
+        const volumeSlider = document.getElementById('volume-slider');
+        const volumeLevel = document.getElementById('volume-level');
+        const currentArtwork = document.getElementById('current-artwork');
+        const currentTitle = document.getElementById('current-title');
+        const currentArtist = document.getElementById('current-artist');
+        
+        // Elementos de modales
+        const authModal = document.getElementById('auth-modal');
+        const authModalClose = document.getElementById('auth-modal-close');
+        const googleAuthBtn = document.getElementById('google-auth-btn');
+        const uploadModal = document.getElementById('upload-modal');
+        const uploadModalClose = document.getElementById('upload-modal-close');
+        const uploadSongBtn = document.getElementById('upload-song-btn');
+        const uploadForm = document.getElementById('upload-form');
+        const playlistModal = document.getElementById('playlist-modal');
+        const playlistModalClose = document.getElementById('playlist-modal-close');
+        const createPlaylistBtn = document.getElementById('create-playlist-btn');
+        const playlistForm = document.getElementById('playlist-form');
+        
+        // Notification
+        const notification = document.getElementById('notification');
+        const notificationMessage = document.getElementById('notification-message');
+        
+        // Ecualizador
+        const eqVisualizer = document.getElementById('eq-visualizer');
+        const eqSliders = document.getElementById('eq-sliders');
+        const eqPresets = document.getElementById('eq-presets');
+        const presetBtns = document.querySelectorAll('.eq-preset-btn');
+        
+        // Inicializar la aplicación
+        document.addEventListener('DOMContentLoaded', initializeApp);
+        
+        async function initializeApp() {
+            // Configuración de Supabase
+            const supabaseUrl = 'https://cabtozpkiefwnkyulafy.supabase.co';
+            const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNhYnRvenBraWVmd25reXVsYWZ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc4NzYyMjcsImV4cCI6MjA2MzQ1MjIyN30.HSQjJwiCOqERVpYEaDCfOYXdD4qyTPbrRfcs_Dabzmg';
+            
+            // Inicializar cliente de Supabase
+            supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+            
+            try {
+                console.log('Inicializando aplicación...');
+                
+                // Verificar y crear buckets de almacenamiento si no existen
+                await createStorageBuckets();
+                
+                // Intentar inicializar la base de datos
+                await initializeDatabase();
+                
+                // Comprobar si hay una sesión activa
+                await checkSession();
+                
+                // Event listeners para la interfaz
+                setupEventListeners();
+                
+                // Inicializar ecualizador
+                setupEqualizer();
+                
+                console.log('Aplicación inicializada correctamente');
+            } catch (error) {
+                console.error('Error al inicializar la aplicación:', error);
+                // Incluso si hay error, intentamos mostrar la interfaz para que el usuario pueda interactuar
+                showWelcomeScreen();
+            }
+        }
+        
+        // Función para crear los buckets de almacenamiento necesarios
+        async function createStorageBuckets() {
+            try {
+                // Verificar y crear bucket para música
+                const { data: buckets } = await supabaseClient.storage.listBuckets();
+                
+                if (!buckets?.find(bucket => bucket.name === 'music')) {
+                    await supabaseClient.storage.createBucket('music', {
+                        public: true,
+                        fileSizeLimit: 50 * 1024 * 1024 // 50MB
+                    });
+                    console.log('Bucket de música creado');
+                }
+                
+                if (!buckets?.find(bucket => bucket.name === 'images')) {
+                    await supabaseClient.storage.createBucket('images', {
+                        public: true,
+                        fileSizeLimit: 10 * 1024 * 1024 // 10MB
+                    });
+                    console.log('Bucket de imágenes creado');
+                }
+            } catch (error) {
+                console.error('Error al crear buckets:', error);
+            }
+        }
+        
+        // Función para inicializar la base de datos
+        async function initializeDatabase() {
+            try {
+                console.log('Iniciando configuración de la base de datos...');
+                
+                // Lista de tablas a crear con sus consultas SQL
+                const tables = [
+                    {
+                        name: 'users',
+                        query: `
+                            CREATE TABLE IF NOT EXISTS users (
+                              id TEXT PRIMARY KEY,
+                              email TEXT UNIQUE NOT NULL,
+                              username TEXT NOT NULL,
+                              avatar_url TEXT,
+                              created_at TIMESTAMPTZ DEFAULT NOW(),
+                              updated_at TIMESTAMPTZ DEFAULT NOW()
+                            );
+                        `
+                    },
+                    {
+                        name: 'songs',
+                        query: `
+                            CREATE TABLE IF NOT EXISTS songs (
+                              id SERIAL PRIMARY KEY,
+                              user_id TEXT REFERENCES users(id) ON DELETE CASCADE,
+                              title TEXT NOT NULL,
+                              artist TEXT NOT NULL,
+                              album TEXT,
+                              file_path TEXT NOT NULL,
+                              file_url TEXT NOT NULL,
+                              cover_url TEXT,
+                              duration INTEGER DEFAULT 0,
+                              created_at TIMESTAMPTZ DEFAULT NOW(),
+                              updated_at TIMESTAMPTZ DEFAULT NOW()
+                            );
+                        `
+                    },
+                    {
+                        name: 'playlists',
+                        query: `
+                            CREATE TABLE IF NOT EXISTS playlists (
+                              id SERIAL PRIMARY KEY,
+                              user_id TEXT REFERENCES users(id) ON DELETE CASCADE,
+                              name TEXT NOT NULL,
+                              description TEXT,
+                              cover_url TEXT,
+                              song_count INTEGER DEFAULT 0,
+                              created_at TIMESTAMPTZ DEFAULT NOW(),
+                              updated_at TIMESTAMPTZ DEFAULT NOW()
+                            );
+                        `
+                    },
+                    {
+                        name: 'playlist_songs',
+                        query: `
+                            CREATE TABLE IF NOT EXISTS playlist_songs (
+                              id SERIAL PRIMARY KEY,
+                              playlist_id INTEGER REFERENCES playlists(id) ON DELETE CASCADE,
+                              song_id INTEGER REFERENCES songs(id) ON DELETE CASCADE,
+                              position INTEGER NOT NULL,
+                              created_at TIMESTAMPTZ DEFAULT NOW(),
+                              UNIQUE(playlist_id, song_id)
+                            );
+                        `
+                    },
+                    {
+                        name: 'listening_history',
+                        query: `
+                            CREATE TABLE IF NOT EXISTS listening_history (
+                              id SERIAL PRIMARY KEY,
+                              user_id TEXT REFERENCES users(id) ON DELETE CASCADE,
+                              song_id INTEGER REFERENCES songs(id) ON DELETE SET NULL,
+                              played_at TIMESTAMPTZ DEFAULT NOW()
+                            );
+                        `
+                    },
+                    {
+                        name: 'equalizer_presets',
+                        query: `
+                            CREATE TABLE IF NOT EXISTS equalizer_presets (
+                              id SERIAL PRIMARY KEY,
+                              user_id TEXT REFERENCES users(id) ON DELETE CASCADE,
+                              name TEXT NOT NULL,
+                              values JSONB NOT NULL,
+                              created_at TIMESTAMPTZ DEFAULT NOW()
+                            );
+                        `
+                    }
+                ];
+                
+                // Ejecutar consultas a través de RPC (procedimiento remoto)
+                for (const table of tables) {
+                    console.log(`Verificando tabla: ${table.name}`);
+                    
+                    // Usamos una función de confianza RPC para ejecutar SQL
+                    // Nota: Esto requiere que configures una función RPC en Supabase
+                    // Si no está configurada, la aplicación seguirá funcionando pero
+                    // deberás crear las tablas manualmente en la consola de Supabase
+                    try {
+                        const { error } = await supabaseClient
+                            .rpc('execute_sql', { query: table.query });
+                            
+                        if (error) throw error;
+                        console.log(`Tabla ${table.name} verificada/creada correctamente`);
+                    } catch (err) {
+                        // Es posible que la función RPC no esté disponible, no bloqueamos la aplicación
+                        console.log(`No se pudo verificar la tabla ${table.name}. Puede que necesites crearla manualmente.`);
+                    }
+                }
+                
+                console.log('Configuración de la base de datos completada');
+            } catch (error) {
+                console.error('Error en la inicialización de la base de datos:', error);
+                console.log('La aplicación intentará funcionar, pero es posible que necesites configurar la base de datos manualmente.');
+            }
+        }
+        
+        async function checkSession() {
+            try {
+                // Obtener sesión actual
+                const { data: { session }, error } = await supabaseClient.auth.getSession();
+                
+                if (error) throw error;
+                
+                if (session) {
+                    // Hay una sesión activa
+                    currentSession = session;
+                    currentUser = session.user;
+                    
+                    console.log('Sesión activa encontrada');
+                    
+                    // Sincronizar usuario con la base de datos
+                    await syncUserToDB(currentUser);
+                    
+                    // Mostrar la aplicación
+                    showApp();
+                    
+                    // Cargar datos de usuario
+                    await loadUserData();
+                    
+                    // Mostrar notificación de bienvenida
+                    const username = currentUser.user_metadata?.full_name || currentUser.email?.split('@')[0] || 'Usuario';
+                    showNotification(`¡Bienvenido ${username}!`, 'success');
+                } else {
+                    // No hay sesión, mostrar pantalla de bienvenida
+                    console.log('No hay sesión activa');
+                    showWelcomeScreen();
+                }
+                
+                // Configurar escucha de cambios en la autenticación
+                setupAuthListener();
+            } catch (error) {
+                console.error('Error al verificar sesión:', error);
+                showWelcomeScreen();
+            }
+        }
+        
+        // Escuchar cambios en la autenticación
+        function setupAuthListener() {
+            const { data: { subscription } } = supabaseClient.auth.onAuthStateChange(
+                async (event, session) => {
+                    console.log('Evento de autenticación:', event);
+                    
+                    if (event === 'SIGNED_IN' && session) {
+                        // Usuario ha iniciado sesión
+                        currentSession = session;
+                        currentUser = session.user;
+                        
+                        // Sincronizar usuario con la base de datos
+                        await syncUserToDB(currentUser);
+                        
+                        // Mostrar la aplicación
+                        showApp();
+                        
+                        // Cargar datos de usuario
+                        await loadUserData();
+                        
+                        // Notificación
+                        const username = currentUser.user_metadata?.full_name || currentUser.email?.split('@')[0] || 'Usuario';
+                        showNotification(`¡Bienvenido ${username}!`, 'success');
+                    } 
+                    else if (event === 'SIGNED_OUT') {
+                        // Usuario ha cerrado sesión
+                        currentUser = null;
+                        currentSession = null;
+                        
+                        // Volver a la pantalla de bienvenida
+                        showWelcomeScreen();
+                        
+                        // Resetear datos
+                        songs = [];
+                        playlists = [];
+                        queue = [];
+                        currentSongIndex = -1;
+                        isPlaying = false;
+                        
+                        // Pausar reproducción si está activa
+                        if (!audioPlayer.paused) {
+                            audioPlayer.pause();
+                        }
+                        
+                        showNotification('Has cerrado sesión correctamente', 'success');
+                    }
+                }
+            );
+            
+            // No es necesario devolver la suscripción ya que es una aplicación de una sola página
+        }
+        
+        function setupEventListeners() {
+            // Botones de autenticación
+            loginBtn.addEventListener('click', showAuthModal);
+            googleAuthBtn.addEventListener('click', signInWithGoogle);
+            logoutBtn.addEventListener('click', signOut);
+            
+            // Navegación entre tabs
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const tabId = tab.getAttribute('data-tab');
+                    changeTab(tabId);
+                });
+            });
+            
+            // Modales
+            authModalClose.addEventListener('click', hideAuthModal);
+            uploadModalClose.addEventListener('click', hideUploadModal);
+            playlistModalClose.addEventListener('click', hidePlaylistModal);
+            
+            // Buttons
+            uploadSongBtn.addEventListener('click', showUploadModal);
+            createPlaylistBtn.addEventListener('click', showPlaylistModal);
+            
+            // Forms
+            uploadForm.addEventListener('submit', handleSongUpload);
+            playlistForm.addEventListener('submit', handlePlaylistCreate);
+            
+            // Player controls
+            playBtn.addEventListener('click', togglePlay);
+            prevBtn.addEventListener('click', playPreviousSong);
+            nextBtn.addEventListener('click', playNextSong);
+            shuffleBtn.addEventListener('click', toggleShuffle);
+            repeatBtn.addEventListener('click', toggleRepeat);
+            
+            // Progress bar
+            progressContainer.addEventListener('click', setProgress);
+            
+            // Volume slider
+            volumeSlider.addEventListener('click', setVolume);
+            
+            // Audio events
+            audioPlayer.addEventListener('timeupdate', updateProgress);
+            audioPlayer.addEventListener('ended', handleSongEnd);
+            audioPlayer.addEventListener('canplay', () => {
+                // Update duration display
+                const audioDuration = audioPlayer.duration;
+                duration.textContent = formatTime(audioDuration);
+            });
+            
+            // Ecualizador presets
+            presetBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const preset = btn.getAttribute('data-preset');
+                    applyEqualizerPreset(preset);
+                    
+                    // Update active state
+                    presetBtns.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                });
+            });
+        }
+        
+        // Autenticación con Google
+        async function signInWithGoogle() {
+            try {
+                showNotification('Iniciando sesión con Google...', 'success');
+                
+                const { error } = await supabaseClient.auth.signInWithOAuth({
+                    provider: 'google',
+                    options: {
+                        redirectTo: window.location.origin,
+                        queryParams: {
+                            access_type: 'offline', 
+                            prompt: 'consent'
+                        }
+                    }
+                });
+                
+                if (error) throw error;
+                
+                // La redirección a Google ocurrirá automáticamente
+                // Al volver, checkSession() manejará la sesión
+            } catch (error) {
+                console.error('Error al iniciar sesión con Google:', error);
+                showNotification('Error al iniciar sesión con Google', 'error');
+            }
+        }
+        
+        // Función para sincronizar el usuario con nuestra base de datos
+        async function syncUserToDB(user) {
+            if (!user) return;
+            
+            try {
+                // Verificar si el usuario ya existe
+                const { data: existingUser, error: fetchError } = await supabaseClient
+                    .from('users')
+                    .select('id')
+                    .eq('id', user.id)
+                    .single();
+                
+                if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116 = No se encontró
+                    throw fetchError;
+                }
+                
+                // Si no existe, lo creamos
+                if (!existingUser) {
+                    const { error: insertError } = await supabaseClient
+                        .from('users')
+                        .insert({
+                            id: user.id,
+                            email: user.email,
+                            username: user.user_metadata?.full_name || user.email?.split('@')[0] || 'Usuario',
+                            avatar_url: user.user_metadata?.avatar_url
+                        });
+                    
+                    if (insertError) throw insertError;
+                    
+                    console.log('Usuario creado en la base de datos');
+                } else {
+                    console.log('Usuario existente, no es necesario crearlo');
+                }
+            } catch (error) {
+                console.error('Error al sincronizar usuario con la base de datos:', error);
+            }
+        }
+        
+        async function signOut() {
+            try {
+                const { error } = await supabaseClient.auth.signOut();
+                
+                if (error) throw error;
+                
+                // Resetear el estado
+                currentUser = null;
+                currentSession = null;
+                songs = [];
+                playlists = [];
+                queue = [];
+                currentSongIndex = -1;
+                isPlaying = false;
+                
+                // Pausar la reproducción si está activa
+                if (!audioPlayer.paused) {
+                    audioPlayer.pause();
+                }
+                
+                // Volver a la pantalla de bienvenida
+                showWelcomeScreen();
+                
+                showNotification('Has cerrado sesión correctamente', 'success');
+            } catch (error) {
+                console.error('Error al cerrar sesión:', error);
+                showNotification('Error al cerrar sesión', 'error');
+            }
+        }
+        
+        // Funciones para cargar datos
+        async function loadUserData() {
+            // Mostrar nombre de usuario
+            if (currentUser) {
+                const username = currentUser.user_metadata?.full_name || currentUser.email;
+                userName.textContent = username;
+            }
+            
+            // Cargar biblioteca de canciones
+            await loadLibrary();
+            
+            // Cargar playlists
+            await loadPlaylists();
+        }
+        
+        async function loadLibrary() {
+            try {
+                if (!currentUser) return;
+                
+                const { data, error } = await supabaseClient
+                    .from('songs')
+                    .select('*')
+                    .eq('user_id', currentUser.id)
+                    .order('created_at', { ascending: false });
+                    
+                if (error) throw error;
+                
+                songs = data || [];
+                
+                // Renderizar biblioteca
+                renderLibrary();
+            } catch (error) {
+                console.error('Error al cargar biblioteca:', error);
+                showNotification('Error al cargar tu biblioteca', 'error');
+            }
+        }
+        
+        async function loadPlaylists() {
+            try {
+                if (!currentUser) return;
+                
+                const { data, error } = await supabaseClient
+                    .from('playlists')
+                    .select('*')
+                    .eq('user_id', currentUser.id)
+                    .order('created_at', { ascending: false });
+                    
+                if (error) throw error;
+                
+                playlists = data || [];
+                
+                // Renderizar playlists
+                renderPlaylists();
+            } catch (error) {
+                console.error('Error al cargar playlists:', error);
+                showNotification('Error al cargar tus playlists', 'error');
+            }
+        }
+        
+        // Funciones de render
+        function renderLibrary() {
+            libraryContainer.innerHTML = '';
+            
+            if (songs.length === 0) {
+                libraryContainer.innerHTML = `
+                    <div style="text-align: center; padding: 2rem; color: var(--color-text-secondary);">
+                        <i class="fas fa-music" style="font-size: 3rem; margin-bottom: 1rem;"></i>
+                        <p>Tu biblioteca está vacía</p>
+                        <p>Sube tu primera canción con el botón "Subir música"</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            songs.forEach(song => {
+                const songCard = document.createElement('div');
+                songCard.className = 'song-card';
+                songCard.dataset.id = song.id;
+                
+                songCard.innerHTML = `
+                    <div class="song-card-artwork">
+                        <img src="${song.cover_url || 'https://placehold.co/200x200/1e293b/8c52ff?text=Cover'}" alt="${song.title}">
+                    </div>
+                    <div class="song-card-info">
+                        <div class="song-card-title">${song.title}</div>
+                        <div class="song-card-artist">${song.artist}</div>
+                    </div>
+                `;
+                
+                songCard.addEventListener('click', () => {
+                    playSong(song.id);
+                });
+                
+                libraryContainer.appendChild(songCard);
+            });
+        }
+        
+        function renderPlaylists() {
+            playlistContainer.innerHTML = '';
+            
+            if (playlists.length === 0) {
+                playlistContainer.innerHTML = `
+                    <div style="text-align: center; padding: 2rem; color: var(--color-text-secondary);">
+                        <i class="fas fa-list" style="font-size: 3rem; margin-bottom: 1rem;"></i>
+                        <p>No tienes playlists</p>
+                        <p>Crea tu primera playlist con el botón "Nueva playlist"</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            playlists.forEach(playlist => {
+                const playlistCard = document.createElement('div');
+                playlistCard.className = 'playlist-card';
+                playlistCard.dataset.id = playlist.id;
+                
+                playlistCard.innerHTML = `
+                    <div class="playlist-card-artwork">
+                        ${playlist.cover_url 
+                            ? `<img src="${playlist.cover_url}" alt="${playlist.name}">`
+                            : `<i class="fas fa-music"></i>`
+                        }
+                    </div>
+                    <div class="playlist-card-info">
+                        <div class="playlist-card-title">${playlist.name}</div>
+                        <div class="playlist-card-count">${playlist.song_count || 0} canciones</div>
+                    </div>
+                `;
+                
+                playlistCard.addEventListener('click', () => {
+                    openPlaylist(playlist.id);
+                });
+                
+                playlistContainer.appendChild(playlistCard);
+            });
+        }
+        
+        // Funciones para el reproductor
+        function playSong(songId) {
+            const songIndex = songs.findIndex(s => s.id === songId);
+            
+            if (songIndex === -1) return;
+            
+            // Establecer cola de reproducción
+            queue = [...songs];
+            currentSongIndex = songIndex;
+            
+            loadCurrentSong();
+        }
+        
+        function loadCurrentSong() {
+            if (currentSongIndex === -1 || queue.length === 0) return;
+            
+            const song = queue[currentSongIndex];
+            
+            // Actualizar UI
+            currentTitle.textContent = song.title;
+            currentArtist.textContent = song.artist;
+            currentArtwork.src = song.cover_url || 'https://placehold.co/150x150/1e293b/8c52ff?text=Cover';
+            
+            // Cargar el audio
+            audioPlayer.src = song.file_url;
+            audioPlayer.load();
+            
+            // Reproducir automáticamente
+            playAudio();
+        }
+        
+        function playAudio() {
+            playBtn.innerHTML = '<i class="fas fa-pause"></i>';
+            audioPlayer.play();
+            isPlaying = true;
+        }
+        
+        function pauseAudio() {
+            playBtn.innerHTML = '<i class="fas fa-play"></i>';
+            audioPlayer.pause();
+            isPlaying = false;
+        }
+        
+        function togglePlay() {
+            if (currentSongIndex === -1 && songs.length > 0) {
+                // Si no hay canción actual pero hay canciones, reproducir la primera
+                playSong(songs[0].id);
+                return;
+            }
+            
+            if (audioPlayer.paused) {
+                playAudio();
+            } else {
+                pauseAudio();
+            }
+        }
+        
+        function playNextSong() {
+            if (queue.length === 0) return;
+            
+            if (shuffle) {
+                // Modo aleatorio
+                let newIndex;
+                do {
+                    newIndex = Math.floor(Math.random() * queue.length);
+                } while (newIndex === currentSongIndex && queue.length > 1);
+                
+                currentSongIndex = newIndex;
+            } else {
+                // Modo normal
+                currentSongIndex = (currentSongIndex + 1) % queue.length;
+            }
+            
+            loadCurrentSong();
+        }
+        
+        function playPreviousSong() {
+            if (queue.length === 0) return;
+            
+            // Si la canción actual lleva menos de 3 segundos, ir a la anterior
+            // Si no, reiniciar la canción actual
+            if (audioPlayer.currentTime > 3) {
+                audioPlayer.currentTime = 0;
+                return;
+            }
+            
+            if (shuffle) {
+                // Modo aleatorio
+                let newIndex;
+                do {
+                    newIndex = Math.floor(Math.random() * queue.length);
+                } while (newIndex === currentSongIndex && queue.length > 1);
+                
+                currentSongIndex = newIndex;
+            } else {
+                // Modo normal
+                currentSongIndex = (currentSongIndex - 1 + queue.length) % queue.length;
+            }
+            
+            loadCurrentSong();
+        }
+        
+        function handleSongEnd() {
+            if (repeat) {
+                // Repetir la misma canción
+                audioPlayer.currentTime = 0;
+                playAudio();
+            } else {
+                // Pasar a la siguiente canción
+                playNextSong();
+            }
+        }
+        
+        function toggleShuffle() {
+            shuffle = !shuffle;
+            shuffleBtn.classList.toggle('active', shuffle);
+            
+            showNotification(`Reproducción aleatoria ${shuffle ? 'activada' : 'desactivada'}`, 'success');
+        }
+        
+        function toggleRepeat() {
+            repeat = !repeat;
+            repeatBtn.classList.toggle('active', repeat);
+            
+            showNotification(`Repetición ${repeat ? 'activada' : 'desactivada'}`, 'success');
+        }
+        
+        function updateProgress() {
+            const { currentTime: time, duration: totalTime } = audioPlayer;
+            
+            if (isNaN(totalTime)) return;
+            
+            // Actualizar barra de progreso
+            const progressPercent = (time / totalTime) * 100;
+            progressBar.style.width = `${progressPercent}%`;
+            
+            // Actualizar tiempo actual
+            currentTime.textContent = formatTime(time);
+        }
+        
+        function setProgress(e) {
+            const width = this.clientWidth;
+            const clickX = e.offsetX;
+            const duration = audioPlayer.duration;
+            
+            if (isNaN(duration)) return;
+            
+            audioPlayer.currentTime = (clickX / width) * duration;
+        }
+        
+        function setVolume(e) {
+            const width = this.clientWidth;
+            const clickX = e.offsetX;
+            const volume = clickX / width;
+            
+            // Establecer volumen (0-1)
+            audioPlayer.volume = volume;
+            
+            // Actualizar UI
+            volumeLevel.style.width = `${volume * 100}%`;
+        }
+        
+        // Funciones para el ecualizador
+        function setupEqualizer() {
+            // Configuración de frecuencias del ecualizador (Hz)
+            const frequencies = [60, 170, 310, 600, 1000, 3000, 6000, 12000, 14000, 16000];
+            
+            // Crear barras para el visualizador
+            for (let i = 0; i < 20; i++) {
+                const bar = document.createElement('div');
+                bar.className = 'eq-bar';
+                bar.style.height = '0px';
+                eqVisualizer.appendChild(bar);
+            }
+            
+            // Crear sliders del ecualizador
+            frequencies.forEach((freq, index) => {
+                const sliderContainer = document.createElement('div');
+                sliderContainer.className = 'eq-slider-container';
+                
+                const displayFreq = freq >= 1000 ? `${freq/1000}K` : freq;
+                
+                sliderContainer.innerHTML = `
+                    <div class="eq-slider">
+                        <div class="eq-slider-thumb" data-index="${index}" style="bottom: 50%;"></div>
+                    </div>
+                    <div class="eq-slider-value">0 dB</div>
+                    <div class="eq-slider-freq">${displayFreq}</div>
+                `;
+                
+                // Agregar eventos para los sliders
+                const thumb = sliderContainer.querySelector('.eq-slider-thumb');
+                const slider = sliderContainer.querySelector('.eq-slider');
+                const valueDisplay = sliderContainer.querySelector('.eq-slider-value');
+                
+                // Hacer arrastrable el thumb
+                makeDraggable(thumb, slider, (percent) => {
+                    // Calcular valor en dB (-12 a +12)
+                    const dB = 12 - (percent * 24);
+                    valueDisplay.textContent = `${Math.round(dB)} dB`;
+                    
+                    // Aquí se aplicaría el ecualizador si estuviéramos usando Web Audio API
+                });
+                
+                eqSliders.appendChild(sliderContainer);
+            });
+        }
+        
+        function applyEqualizerPreset(preset) {
+            // Valores para cada preset (10 bandas, de -12 a +12 dB)
+            const presets = {
+                flat: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                rock: [4, 3, 2, 0, -1, 0, 2, 3, 4, 4],
+                pop: [-2, -1, 0, 2, 4, 4, 2, 0, -1, -2],
+                jazz: [4, 2, 0, -2, -2, 0, 0, 2, 4, 5],
+                classical: [5, 4, 3, 2, -1, -1, 0, 2, 4, 5],
+                bass: [8, 7, 6, 4, 1, 0, -2, -3, -4, -4]
+            };
+            
+            const values = presets[preset] || presets.flat;
+            
+            // Aplicar valores a los sliders
+            const thumbs = document.querySelectorAll('.eq-slider-thumb');
+            const valueDisplays = document.querySelectorAll('.eq-slider-value');
+            
+            thumbs.forEach((thumb, i) => {
+                const dB = values[i];
+                // Convertir dB a porcentaje (0-100%)
+                const percent = (12 - dB) / 24;
+                thumb.style.bottom = `${percent * 100}%`;
+                valueDisplays[i].textContent = `${dB} dB`;
+                
+                // Aquí se aplicaría el ecualizador si estuviéramos usando Web Audio API
+            });
+            
+            showNotification(`Preset de ecualizador: ${preset}`, 'success');
+        }
+        
+        // Hacer que un elemento sea arrastrable
+        function makeDraggable(thumb, container, callback) {
+            let isDragging = false;
+            
+            thumb.addEventListener('mousedown', (e) => {
+                isDragging = true;
+                document.body.style.userSelect = 'none';
+                updatePosition(e);
+            });
+            
+            document.addEventListener('mousemove', (e) => {
+                if (isDragging) {
+                    updatePosition(e);
+                }
+            });
+            
+            document.addEventListener('mouseup', () => {
+                isDragging = false;
+                document.body.style.userSelect = '';
+            });
+            
+            function updatePosition(e) {
+                const rect = container.getBoundingClientRect();
+                const height = rect.height;
+                const y = e.clientY - rect.top;
+                
+                // Calcular posición (0-1)
+                let percent = 1 - (y / height);
+                
+                // Limitar entre 0 y 1
+                percent = Math.max(0, Math.min(1, percent));
+                
+                // Actualizar posición visual
+                thumb.style.bottom = `${percent * 100}%`;
+                
+                // Ejecutar callback con el porcentaje
+                if (callback) callback(percent);
+            }
+        }
+        
+        // Funciones para manejo de subida de archivos
+        async function handleSongUpload(e) {
+            e.preventDefault();
+            
+            if (!currentUser) return;
+            
+            const fileInput = document.getElementById('song-file');
+            const titleInput = document.getElementById('song-title');
+            const artistInput = document.getElementById('song-artist');
+            const coverInput = document.getElementById('song-cover');
+            
+            if (!fileInput.files[0]) {
+                showNotification('Selecciona un archivo de audio', 'error');
+                return;
+            }
+            
+            const audioFile = fileInput.files[0];
+            
+            // Título y artista automáticos si no se proporcionan
+            let title = titleInput.value.trim();
+            let artist = artistInput.value.trim();
+            
+            if (!title) {
+                // Extraer nombre del archivo sin extensión
+                title = audioFile.name.split('.').slice(0, -1).join('.');
+            }
+            
+            if (!artist) {
+                artist = 'Desconocido';
+            }
+            
+            try {
+                // Mostrar indicador de carga
+                showLoading();
+                
+                // 1. Subir archivo de audio
+                const filePath = `songs/${currentUser.id}/${Date.now()}-${audioFile.name}`;
+                
+                const { data: audioData, error: audioError } = await supabaseClient.storage
+                    .from('music')
+                    .upload(filePath, audioFile);
+                
+                if (audioError) throw audioError;
+                
+                // Obtener URL pública
+                const { data: { publicUrl: audioUrl } } = supabaseClient.storage
+                    .from('music')
+                    .getPublicUrl(filePath);
+                
+                // 2. Subir carátula (opcional)
+                let coverUrl = null;
+                
+                if (coverInput.files[0]) {
+                    const coverFile = coverInput.files[0];
+                    const coverPath = `covers/${currentUser.id}/${Date.now()}-${coverFile.name}`;
+                    
+                    const { data: coverData, error: coverError } = await supabaseClient.storage
+                        .from('images')
+                        .upload(coverPath, coverFile);
+                    
+                    if (coverError) throw coverError;
+                    
+                    // Obtener URL pública
+                    const { data: { publicUrl } } = supabaseClient.storage
+                        .from('images')
+                        .getPublicUrl(coverPath);
+                        
+                    coverUrl = publicUrl;
+                }
+                
+                // 3. Insertar en la base de datos
+                const { data: songData, error: songError } = await supabaseClient
+                    .from('songs')
+                    .insert({
+                        user_id: currentUser.id,
+                        title: title,
+                        artist: artist,
+                        file_path: filePath,
+                        file_url: audioUrl,
+                        cover_url: coverUrl,
+                        duration: 0, // Se actualizaría después si es necesario
+                    })
+                    .select()
+                    .single();
+                
+                if (songError) throw songError;
+                
+                // Actualizar la biblioteca
+                songs.unshift(songData);
+                renderLibrary();
+                
+                // Ocultar modal y resetear formulario
+                hideUploadModal();
+                uploadForm.reset();
+                
+                // Mostrar notificación
+                showNotification('Canción subida correctamente', 'success');
+            } catch (error) {
+                console.error('Error al subir canción:', error);
+                showNotification('Error al subir la canción', 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+        
+        // Funciones para playlists
+        async function handlePlaylistCreate(e) {
+            e.preventDefault();
+            
+            if (!currentUser) return;
+            
+            const nameInput = document.getElementById('playlist-name');
+            const descriptionInput = document.getElementById('playlist-description');
+            const coverInput = document.getElementById('playlist-cover');
+            
+            const name = nameInput.value.trim();
+            
+            if (!name) {
+                showNotification('Ingresa un nombre para la playlist', 'error');
+                return;
+            }
+            
+            try {
+                // Mostrar indicador de carga
+                showLoading();
+                
+                // 1. Subir carátula (opcional)
+                let coverUrl = null;
+                
+                if (coverInput.files[0]) {
+                    const coverFile = coverInput.files[0];
+                    const coverPath = `covers/${currentUser.id}/${Date.now()}-${coverFile.name}`;
+                    
+                    const { data: coverData, error: coverError } = await supabaseClient.storage
+                        .from('images')
+                        .upload(coverPath, coverFile);
+                    
+                    if (coverError) throw coverError;
+                    
+                    // Obtener URL pública
+                    const { data: { publicUrl } } = supabaseClient.storage
+                        .from('images')
+                        .getPublicUrl(coverPath);
+                        
+                    coverUrl = publicUrl;
+                }
+                
+                // 2. Insertar en la base de datos
+                const { data: playlistData, error: playlistError } = await supabaseClient
+                    .from('playlists')
+                    .insert({
+                        user_id: currentUser.id,
+                        name: name,
+                        description: descriptionInput.value.trim(),
+                        cover_url: coverUrl,
+                        song_count: 0
+                    })
+                    .select()
+                    .single();
+                
+                if (playlistError) throw playlistError;
+                
+                // Actualizar playlists
+                playlists.unshift(playlistData);
+                renderPlaylists();
+                
+                // Ocultar modal y resetear formulario
+                hidePlaylistModal();
+                playlistForm.reset();
+                
+                // Mostrar notificación
+                showNotification('Playlist creada correctamente', 'success');
+            } catch (error) {
+                console.error('Error al crear playlist:', error);
+                showNotification('Error al crear la playlist', 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+        
+        async function openPlaylist(playlistId) {
+            try {
+                // Encontrar la playlist
+                const playlist = playlists.find(p => p.id === playlistId);
+                
+                if (!playlist) return;
+                
+                // Mostrar indicador de carga
+                showLoading();
+                
+                // Obtener canciones de la playlist
+                const { data, error } = await supabaseClient
+                    .from('playlist_songs')
+                    .select(`
+                        position,
+                        songs (*)
+                    `)
+                    .eq('playlist_id', playlistId)
+                    .order('position');
+                
+                if (error) throw error;
+                
+                // Cargar playlist en UI
+                currentPlaylist = {
+                    ...playlist,
+                    songs: data.map(item => item.songs)
+                };
+                
+                // Renderizar vista de playlist
+                renderPlaylistView(currentPlaylist);
+                
+                // Cambiar a pestaña de playlist
+                changeTab('playlists');
+                
+                // Mostrar notificación
+                showNotification(`Playlist: ${playlist.name}`, 'success');
+            } catch (error) {
+                console.error('Error al abrir playlist:', error);
+                showNotification('Error al cargar la playlist', 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+        
+        function renderPlaylistView(playlist) {
+            // Actualizar vista de playlist
+            const playlistsTab = document.getElementById('playlists-tab');
+            
+            playlistsTab.innerHTML = `
+                <div class="playlist-header">
+                    <div>
+                        <h3>${playlist.name}</h3>
+                        <p style="color: var(--color-text-secondary);">${playlist.description || ''}</p>
+                    </div>
+                    <div>
+                        <button class="btn btn-primary" id="play-playlist-btn">
+                            <i class="fas fa-play"></i> Reproducir
+                        </button>
+                        <button class="btn" id="back-to-playlists-btn">
+                            <i class="fas fa-arrow-left"></i> Volver
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="songs-list" id="playlist-songs-list">
+                    ${playlist.songs.length === 0 
+                        ? `<div style="text-align: center; padding: 2rem; color: var(--color-text-secondary);">
+                            <p>Esta playlist está vacía</p>
+                            <p>Añade canciones desde la biblioteca</p>
+                           </div>`
+                        : ''
+                    }
+                </div>
+            `;
+            
+            // Mostrar lista de canciones
+            const songsList = document.getElementById('playlist-songs-list');
+            
+            if (playlist.songs.length > 0) {
+                playlist.songs.forEach((song, index) => {
+                    const songItem = document.createElement('div');
+                    songItem.className = 'song-item';
+                    songItem.dataset.id = song.id;
+                    
+                    songItem.innerHTML = `
+                        <div style="display: flex; align-items: center; padding: 0.75rem; border-bottom: 1px solid rgba(148, 163, 184, 0.1);">
+                            <div style="margin-right: 1rem; color: var(--color-text-secondary);">
+                                ${index + 1}
+                            </div>
+                            <div style="display: flex; align-items: center; flex: 1;">
+                                <div style="width: 40px; height: 40px; margin-right: 1rem; background-color: rgba(15, 23, 42, 0.5); border-radius: 0.25rem; overflow: hidden;">
+                                    <img src="${song.cover_url || 'https://placehold.co/40x40/1e293b/8c52ff?text=Cover'}" alt="${song.title}" style="width: 100%; height: 100%; object-fit: cover;">
+                                </div>
+                                <div>
+                                    <div style="font-weight: 500;">${song.title}</div>
+                                    <div style="font-size: 0.75rem; color: var(--color-text-secondary);">${song.artist}</div>
+                                </div>
+                            </div>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <button class="play-song-btn" data-id="${song.id}" style="background: none; border: none; color: var(--color-text); cursor: pointer;">
+                                    <i class="fas fa-play"></i>
+                                </button>
+                                <button class="remove-song-btn" data-id="${song.id}" style="background: none; border: none; color: var(--color-text-secondary); cursor: pointer;">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    
+                    songsList.appendChild(songItem);
+                });
+                
+                // Agregar eventos a los botones
+                document.querySelectorAll('.play-song-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const songId = parseInt(btn.dataset.id);
+                        playSongFromPlaylist(songId);
+                    });
+                });
+                
+                document.querySelectorAll('.remove-song-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const songId = parseInt(btn.dataset.id);
+                        removeSongFromPlaylist(songId);
+                    });
+                });
+            }
+            
+            // Agregar eventos a los botones
+            document.getElementById('play-playlist-btn')?.addEventListener('click', () => {
+                playPlaylist(playlist);
+            });
+            
+            document.getElementById('back-to-playlists-btn')?.addEventListener('click', () => {
+                currentPlaylist = null;
+                loadPlaylists();
+            });
+        }
+        
+        function playSongFromPlaylist(songId) {
+            if (!currentPlaylist) return;
+            
+            const songIndex = currentPlaylist.songs.findIndex(s => s.id === songId);
+            
+            if (songIndex === -1) return;
+            
+            // Establecer cola de reproducción
+            queue = [...currentPlaylist.songs];
+            currentSongIndex = songIndex;
+            
+            loadCurrentSong();
+        }
+        
+        function playPlaylist(playlist) {
+            if (!playlist || !playlist.songs.length) return;
+            
+            // Establecer cola de reproducción
+            queue = [...playlist.songs];
+            currentSongIndex = 0;
+            
+            loadCurrentSong();
+            
+            showNotification(`Reproduciendo playlist: ${playlist.name}`, 'success');
+        }
+        
+        async function removeSongFromPlaylist(songId) {
+            if (!currentPlaylist) return;
+            
+            try {
+                // Eliminar de la base de datos
+                const { error } = await supabaseClient
+                    .from('playlist_songs')
+                    .delete()
+                    .eq('playlist_id', currentPlaylist.id)
+                    .eq('song_id', songId);
+                
+                if (error) throw error;
+                
+                // Actualizar la playlist en memoria
+                currentPlaylist.songs = currentPlaylist.songs.filter(s => s.id !== songId);
+                
+                // Actualizar contador de canciones
+                const { error: updateError } = await supabaseClient
+                    .from('playlists')
+                    .update({ song_count: currentPlaylist.songs.length })
+                    .eq('id', currentPlaylist.id);
+                
+                if (updateError) throw updateError;
+                
+                // Actualizar la lista de playlists
+                const playlistIndex = playlists.findIndex(p => p.id === currentPlaylist.id);
+                
+                if (playlistIndex !== -1) {
+                    playlists[playlistIndex].song_count = currentPlaylist.songs.length;
+                }
+                
+                // Volver a renderizar la vista de playlist
+                renderPlaylistView(currentPlaylist);
+                
+                showNotification('Canción eliminada de la playlist', 'success');
+            } catch (error) {
+                console.error('Error al eliminar canción de la playlist:', error);
+                showNotification('Error al eliminar la canción', 'error');
+            }
+        }
+        
+        // Funciones de navegación
+        function changeTab(tabId) {
+            // Actualizar tabs
+            tabs.forEach(tab => {
+                tab.classList.toggle('active', tab.getAttribute('data-tab') === tabId);
+            });
+            
+            // Actualizar contenido
+            tabContents.forEach(content => {
+                const id = content.id.split('-')[0];
+                content.classList.toggle('hidden', id !== tabId);
+            });
+        }
+        
+        // Funciones para mostrar/ocultar secciones y modales
+        function showWelcomeScreen() {
+            welcomeScreen.style.display = 'block';
+            appContainer.style.display = 'none';
+        }
+        
+        function showApp() {
+            welcomeScreen.style.display = 'none';
+            appContainer.style.display = 'block';
+        }
+        
+        function showAuthModal() {
+            authModal.classList.add('active');
+        }
+        
+        function hideAuthModal() {
+            authModal.classList.remove('active');
+        }
+        
+        function showUploadModal() {
+            uploadModal.classList.add('active');
+        }
+        
+        function hideUploadModal() {
+            uploadModal.classList.remove('active');
+        }
+        
+        function showPlaylistModal() {
+            playlistModal.classList.add('active');
+        }
+        
+        function hidePlaylistModal() {
+            playlistModal.classList.remove('active');
+        }
+        
+        function showLoading() {
+            document.body.classList.add('loading');
+        }
+        
+        function hideLoading() {
+            document.body.classList.remove('loading');
+        }
+        
+        function showNotification(message, type = 'success') {
+            notificationMessage.textContent = message;
+            notification.className = `notification notification-${type} active`;
+            
+            setTimeout(() => {
+                notification.classList.remove('active');
+            }, 3000);
+        }
+        
+        // Funciones auxiliares
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+        }
+    </script>
+</body>
+</html>
