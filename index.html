@@ -1408,24 +1408,8 @@
                 
                 if (error) throw error;
                 
-                // Resetear el estado
-                currentUser = null;
-                currentSession = null;
-                songs = [];
-                playlists = [];
-                queue = [];
-                currentSongIndex = -1;
-                isPlaying = false;
-                
-                // Pausar la reproducción si está activa
-                if (!audioPlayer.paused) {
-                    audioPlayer.pause();
-                }
-                
-                // Volver a la pantalla de bienvenida
-                showWelcomeScreen();
-                
-                showNotification('Has cerrado sesión correctamente', 'success');
+                // No es necesario hacer nada más aquí, el listener de autenticación
+                // manejará el cambio de estado
             } catch (error) {
                 console.error('Error al cerrar sesión:', error);
                 showNotification('Error al cerrar sesión', 'error');
@@ -2310,3 +2294,6 @@
     </script>
 </body>
 </html>
+            
+
+                
