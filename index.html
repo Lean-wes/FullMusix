@@ -11,7 +11,7 @@
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
         import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, orderBy, query, onSnapshot, serverTimestamp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
-        import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
+        import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
 
         // Firebase configuration
         const firebaseConfig = {
@@ -29,6 +29,13 @@
         const db = getFirestore(app);
         const auth = getAuth(app);
         const provider = new GoogleAuthProvider();
+        
+        // Configure Google provider
+        provider.addScope('profile');
+        provider.addScope('email');
+        provider.setCustomParameters({
+            prompt: 'select_account'
+        });
 
         // Make Firebase services available globally
         window.firebase = {
@@ -48,7 +55,9 @@
             signInWithPopup,
             signOut,
             onAuthStateChanged,
-            GoogleAuthProvider
+            GoogleAuthProvider,
+            createUserWithEmailAndPassword,
+            signInWithEmailAndPassword
         };
 
         // Firebase Service Class
@@ -89,6 +98,28 @@
                 } catch (error) {
                     console.error('Error en autenticación:', error);
                     alert('Error al iniciar sesión: ' + error.message);
+                    throw error;
+                }
+            }
+
+            async signInWithEmail(email, password) {
+                try {
+                    const result = await signInWithEmailAndPassword(auth, email, password);
+                    console.log('Inicio de sesión exitoso:', result.user);
+                    return result.user;
+                } catch (error) {
+                    console.error('Error en autenticación:', error);
+                    throw error;
+                }
+            }
+
+            async signUpWithEmail(email, password) {
+                try {
+                    const result = await createUserWithEmailAndPassword(auth, email, password);
+                    console.log('Registro exitoso:', result.user);
+                    return result.user;
+                } catch (error) {
+                    console.error('Error en registro:', error);
                     throw error;
                 }
             }
@@ -676,14 +707,53 @@
             <p class="text-gray-400 mb-8">Tu reproductor de música personal en la nube</p>
         </div>
         
+        <!-- Login/Register Toggle -->
+        <div class="mb-6">
+            <div class="flex bg-gray-800 rounded-lg p-1">
+                <button id="loginTab" class="flex-1 py-2 px-4 rounded-md bg-green-500 text-white transition-all">
+                    Iniciar Sesión
+                </button>
+                <button id="registerTab" class="flex-1 py-2 px-4 rounded-md text-gray-400 transition-all">
+                    Registrarse
+                </button>
+            </div>
+        </div>
+        
+        <!-- Email/Password Form -->
+        <div id="emailAuthForm" class="w-full max-w-sm">
+            <div class="mb-4">
+                <input type="email" id="emailInput" placeholder="Correo electrónico" 
+                       class="w-full bg-gray-800 text-white p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+            </div>
+            <div class="mb-6">
+                <input type="password" id="passwordInput" placeholder="Contraseña" 
+                       class="w-full bg-gray-800 text-white p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+            </div>
+            <button id="emailAuthBtn" class="auth-button w-full mb-4">
+                <i class="fas fa-envelope mr-2"></i>
+                <span id="authBtnText">Iniciar Sesión</span>
+            </button>
+        </div>
+        
+        <!-- Divider -->
+        <div class="flex items-center w-full max-w-sm my-4">
+            <div class="flex-1 border-t border-gray-600"></div>
+            <span class="px-4 text-gray-400 text-sm">o</span>
+            <div class="flex-1 border-t border-gray-600"></div>
+        </div>
+        
+        <!-- Google Sign In -->
         <button id="googleSignInBtn" class="auth-button">
             <i class="fab fa-google"></i>
-            Iniciar sesión con Google
+            Continuar con Google
         </button>
         
         <p class="text-gray-500 text-sm mt-4">
-            Necesitas iniciar sesión para subir y guardar tus canciones
+            Necesitas una cuenta para subir y guardar tus canciones
         </p>
+        
+        <!-- Error Messages -->
+        <div id="authMessage" class="mt-4 hidden"></div>
     </div>
 
     <!-- Main Application -->
@@ -1260,6 +1330,7 @@
                 this.filteredTracks = [];
                 this.currentTab = 'player';
                 this.uploadInProgress = false;
+                this.isRegistering = false;
                 
                 this.initializeElements();
                 this.bindEvents();
@@ -1302,6 +1373,19 @@
                 // Authentication buttons
                 document.getElementById('googleSignInBtn').addEventListener('click', () => this.signInWithGoogle());
                 document.getElementById('logoutBtn').addEventListener('click', () => this.signOut());
+                
+                // Email authentication
+                document.getElementById('emailAuthBtn').addEventListener('click', () => this.handleEmailAuth());
+                document.getElementById('loginTab').addEventListener('click', () => this.switchAuthTab('login'));
+                document.getElementById('registerTab').addEventListener('click', () => this.switchAuthTab('register'));
+                
+                // Enter key support
+                document.getElementById('emailInput').addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') this.handleEmailAuth();
+                });
+                document.getElementById('passwordInput').addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') this.handleEmailAuth();
+                });
             }
 
             async signInWithGoogle() {
@@ -1327,6 +1411,110 @@
                 } catch (error) {
                     this.showMessage('Error al cerrar sesión: ' + error.message, 'error');
                 }
+            }
+
+            switchAuthTab(tab) {
+                const loginTab = document.getElementById('loginTab');
+                const registerTab = document.getElementById('registerTab');
+                const authBtnText = document.getElementById('authBtnText');
+                
+                if (tab === 'login') {
+                    loginTab.classList.add('bg-green-500', 'text-white');
+                    loginTab.classList.remove('text-gray-400');
+                    registerTab.classList.remove('bg-green-500', 'text-white');
+                    registerTab.classList.add('text-gray-400');
+                    authBtnText.textContent = 'Iniciar Sesión';
+                    this.isRegistering = false;
+                } else {
+                    registerTab.classList.add('bg-green-500', 'text-white');
+                    registerTab.classList.remove('text-gray-400');
+                    loginTab.classList.remove('bg-green-500', 'text-white');
+                    loginTab.classList.add('text-gray-400');
+                    authBtnText.textContent = 'Registrarse';
+                    this.isRegistering = true;
+                }
+            }
+
+            async handleEmailAuth() {
+                const email = document.getElementById('emailInput').value.trim();
+                const password = document.getElementById('passwordInput').value;
+                const authBtn = document.getElementById('emailAuthBtn');
+                const authMessage = document.getElementById('authMessage');
+                
+                // Validación básica
+                if (!email || !password) {
+                    this.showAuthMessage('Por favor completa todos los campos', 'error');
+                    return;
+                }
+                
+                if (password.length < 6) {
+                    this.showAuthMessage('La contraseña debe tener al menos 6 caracteres', 'error');
+                    return;
+                }
+
+                // Mostrar loading
+                authBtn.disabled = true;
+                authBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Procesando...';
+                
+                try {
+                    if (this.isRegistering) {
+                        await window.firebaseService.signUpWithEmail(email, password);
+                        this.showAuthMessage('¡Cuenta creada exitosamente!', 'success');
+                    } else {
+                        await window.firebaseService.signInWithEmail(email, password);
+                        this.showAuthMessage('¡Inicio de sesión exitoso!', 'success');
+                    }
+                    
+                    // Limpiar formulario
+                    document.getElementById('emailInput').value = '';
+                    document.getElementById('passwordInput').value = '';
+                    
+                } catch (error) {
+                    console.error('Error en autenticación:', error);
+                    let errorMessage = 'Error desconocido';
+                    
+                    // Mensajes de error en español
+                    switch (error.code) {
+                        case 'auth/email-already-in-use':
+                            errorMessage = 'Este correo ya está registrado';
+                            break;
+                        case 'auth/weak-password':
+                            errorMessage = 'La contraseña es muy débil';
+                            break;
+                        case 'auth/invalid-email':
+                            errorMessage = 'Correo electrónico inválido';
+                            break;
+                        case 'auth/user-not-found':
+                            errorMessage = 'Usuario no encontrado';
+                            break;
+                        case 'auth/wrong-password':
+                            errorMessage = 'Contraseña incorrecta';
+                            break;
+                        case 'auth/too-many-requests':
+                            errorMessage = 'Demasiados intentos. Intenta más tarde';
+                            break;
+                        default:
+                            errorMessage = error.message;
+                    }
+                    
+                    this.showAuthMessage(errorMessage, 'error');
+                } finally {
+                    // Restaurar botón
+                    authBtn.disabled = false;
+                    authBtn.innerHTML = `<i class="fas fa-envelope mr-2"></i><span id="authBtnText">${this.isRegistering ? 'Registrarse' : 'Iniciar Sesión'}</span>`;
+                }
+            }
+
+            showAuthMessage(message, type) {
+                const authMessage = document.getElementById('authMessage');
+                authMessage.className = `mt-4 p-3 rounded-lg text-sm ${type === 'error' ? 'bg-red-600 text-white' : 'bg-green-600 text-white'}`;
+                authMessage.textContent = message;
+                authMessage.classList.remove('hidden');
+                
+                // Auto-hide después de 5 segundos
+                setTimeout(() => {
+                    authMessage.classList.add('hidden');
+                }, 5000);
             }
 
             setupTracksListener() {
@@ -1627,4 +1815,4 @@
         });
     </script>
 </body>
-    </html>
+</html>
