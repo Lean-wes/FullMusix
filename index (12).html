@@ -1,0 +1,2818 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>FullMusic - Reproductor Web</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary: #8075FF;
+            --primary-light: #A799FF;
+            --primary-dark: #6055DB;
+            --background: #121212;
+            --background-surface: #1E1E1E;
+            --background-elevated: #2A2A2A;
+            --text-primary: #FFFFFF;
+            --text-secondary: #B3B3B3;
+            --text-tertiary: #737373;
+            --error: #FF5252;
+            --success: #4CAF50;
+            --warning: #FFC107;
+            --border-radius: 12px;
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--background);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        /* Estilos de autenticación */
+        #authSection {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+            background-color: var(--background);
+            background-image: linear-gradient(0deg, rgba(0,0,0,0.7), rgba(0,0,0,0.3)), url('https://images.unsplash.com/photo-1614149162883-504ce4d13909?w=600&auto=format');
+            background-size: cover;
+            background-position: center;
+        }
+
+        .auth-container {
+            width: 100%;
+            max-width: 400px;
+            padding: 30px;
+            border-radius: var(--border-radius);
+            background-color: rgba(30, 30, 30, 0.85);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .auth-logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .auth-logo h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            letter-spacing: -0.5px;
+        }
+
+        .auth-logo span {
+            color: var(--primary);
+        }
+
+        .auth-form {
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: var(--border-radius);
+            background-color: rgba(0, 0, 0, 0.2);
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: var(--transition);
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(128, 117, 255, 0.25);
+        }
+
+        .auth-tabs {
+            display: flex;
+            margin-bottom: 24px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .auth-tab {
+            flex: 1;
+            text-align: center;
+            padding: 12px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: var(--transition);
+            position: relative;
+        }
+
+        .auth-tab.active {
+            color: var(--primary);
+        }
+
+        .auth-tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: var(--primary);
+        }
+
+        .auth-btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: var(--border-radius);
+            background-color: var(--primary);
+            color: white;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            margin-bottom: 16px;
+        }
+
+        .auth-btn:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .auth-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        .auth-btn.google {
+            background-color: #4285F4;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .auth-btn.google:hover {
+            background-color: #3367D6;
+        }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            margin: 20px 0;
+            color: var(--text-tertiary);
+            font-size: 0.9rem;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .divider::before {
+            margin-right: 10px;
+        }
+
+        .divider::after {
+            margin-left: 10px;
+        }
+
+        /* Estilos de la aplicación principal */
+        #mainApp {
+            display: none;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .top-bar {
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background-color: var(--background);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .app-logo {
+            font-size: 1.3rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .app-logo span {
+            color: var(--primary);
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background-color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .user-name {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .logout-btn {
+            background: none;
+            border: none;
+            color: var(--text-tertiary);
+            cursor: pointer;
+            padding: 4px;
+        }
+
+        .search-bar {
+            padding: 0 16px 16px;
+            position: sticky;
+            top: 60px;
+            z-index: 9;
+            background-color: var(--background);
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 12px 16px 12px 42px;
+            border-radius: 24px;
+            border: none;
+            background-color: var(--background-elevated);
+            color: var(--text-primary);
+            font-size: 0.95rem;
+        }
+
+        .search-input:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(128, 117, 255, 0.25);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 30px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-tertiary);
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 0 16px 100px;
+            overflow-y: auto;
+        }
+
+        .section-title {
+            margin: 24px 0 16px;
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+
+        .playlist-tabs {
+            display: flex;
+            overflow-x: auto;
+            gap: 10px;
+            padding-bottom: 10px;
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none; /* IE and Edge */
+        }
+
+        .playlist-tabs::-webkit-scrollbar {
+            display: none; /* Chrome, Safari, Opera */
+        }
+
+        .playlist-tab {
+            padding: 8px 16px;
+            background-color: var(--background-surface);
+            border-radius: 20px;
+            white-space: nowrap;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: var(--transition);
+            flex-shrink: 0;
+        }
+
+        .playlist-tab.active {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .create-playlist-btn {
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            background-color: var(--background-elevated);
+            border-radius: 20px;
+            white-space: nowrap;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: var(--transition);
+            flex-shrink: 0;
+        }
+
+        .recently-played {
+            display: flex;
+            overflow-x: auto;
+            gap: 16px;
+            padding-bottom: 10px;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        .recently-played::-webkit-scrollbar {
+            display: none;
+        }
+
+        .recent-card {
+            flex: 0 0 auto;
+            width: 140px;
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            background-color: var(--background-surface);
+            transition: var(--transition);
+        }
+
+        .recent-card:active {
+            transform: scale(0.98);
+        }
+
+        .recent-thumb {
+            width: 100%;
+            height: 140px;
+            background-color: var(--background-elevated);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+        }
+
+        .recent-info {
+            padding: 12px;
+        }
+
+        .recent-title {
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .recent-artist {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .tracks-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .track-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            border-radius: var(--border-radius);
+            background-color: var(--background-surface);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .track-item:active {
+            transform: scale(0.99);
+            background-color: var(--background-elevated);
+        }
+
+        .track-item.active {
+            background-color: rgba(128, 117, 255, 0.1);
+            border-left: 3px solid var(--primary);
+        }
+
+        .track-thumb {
+            width: 50px;
+            height: 50px;
+            border-radius: 6px;
+            background-color: var(--background-elevated);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            margin-right: 12px;
+            flex-shrink: 0;
+        }
+
+        .track-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .track-title {
+            font-size: 0.95rem;
+            font-weight: 500;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .track-artist {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .track-actions {
+            padding: 8px;
+            color: var(--text-tertiary);
+        }
+
+        .fab-container {
+            position: fixed;
+            right: 20px;
+            bottom: 90px;
+            z-index: 100;
+        }
+
+        .fab-button {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background-color: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .fab-button:active {
+            transform: scale(0.95);
+            background-color: var(--primary-dark);
+        }
+
+        /* Reproductor de música (mini y completo) */
+        .player-container {
+            position: fixed;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 1000;
+        }
+
+        .mini-player {
+            padding: 10px 16px;
+            background-color: var(--background-surface);
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            align-items: center;
+            border-radius: 12px 12px 0 0;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .mini-player-track {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            min-width: 0;
+        }
+
+        .mini-player-thumb {
+            width: 40px;
+            height: 40px;
+            border-radius: 6px;
+            background-color: var(--background-elevated);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            margin-right: 12px;
+            flex-shrink: 0;
+        }
+
+        .mini-player-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .mini-player-title {
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin-bottom: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .mini-player-artist {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .mini-player-controls {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .control-button {
+            color: var(--text-primary);
+            background: none;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+        }
+
+        .control-button.play-pause {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .full-player {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--background);
+            z-index: 1001;
+            padding: 24px 16px;
+            display: none;
+            flex-direction: column;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transform: translateY(100%);
+        }
+
+        .full-player.active {
+            display: flex;
+            transform: translateY(0);
+        }
+
+        .full-player-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 30px;
+        }
+
+        .close-player-btn {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .player-mode-toggle {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+        }
+
+        .full-player-artwork {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+
+        .artwork {
+            width: 100%;
+            max-width: 300px;
+            aspect-ratio: 1/1;
+            border-radius: 16px;
+            background-color: var(--background-elevated);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            font-size: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .artwork-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.5) 100%);
+            opacity: 0;
+            transition: var(--transition);
+        }
+
+        .artwork:hover .artwork-overlay {
+            opacity: 1;
+        }
+
+        .artwork-gradient {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, var(--primary-dark), var(--primary-light));
+            opacity: 0.2;
+        }
+
+        .full-player-info {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .full-player-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .full-player-artist {
+            font-size: 1rem;
+            color: var(--text-secondary);
+        }
+
+        .player-slider {
+            margin-bottom: 8px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background-color: var(--background-elevated);
+            border-radius: 2px;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background-color: var(--primary);
+            width: 0%;
+            border-radius: 2px;
+            transition: width 0.1s linear;
+        }
+
+        .time-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            color: var(--text-tertiary);
+            margin-bottom: 30px;
+        }
+
+        .full-player-controls {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 24px;
+            margin-bottom: 40px;
+        }
+
+        .full-control-button {
+            color: var(--text-secondary);
+            background: none;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 44px;
+            height: 44px;
+            transition: var(--transition);
+        }
+
+        .full-control-button:hover {
+            color: var(--text-primary);
+        }
+
+        .full-control-button.play-pause {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background-color: var(--primary);
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        .full-control-button.play-pause:hover {
+            background-color: var(--primary-dark);
+            transform: scale(1.05);
+        }
+
+        .player-options {
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+        }
+
+        .player-option-button {
+            color: var(--text-tertiary);
+            background: none;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            transition: var(--transition);
+            font-size: 0.8rem;
+        }
+
+        .player-option-button:hover {
+            color: var(--text-secondary);
+        }
+
+        .player-option-button.active {
+            color: var(--primary);
+        }
+
+        /* Modals */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            z-index: 2000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+
+        .modal-container {
+            width: 100%;
+            max-width: 400px;
+            background-color: var(--background-surface);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            animation: modal-in 0.3s ease;
+        }
+
+        @keyframes modal-in {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .modal-header {
+            padding: 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .modal-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .modal-body {
+            padding: 16px;
+        }
+
+        .modal-footer {
+            padding: 16px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .modal-btn {
+            padding: 10px 16px;
+            border-radius: var(--border-radius);
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .modal-btn.cancel {
+            background-color: transparent;
+            color: var(--text-secondary);
+            border: none;
+        }
+
+        .modal-btn.primary {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+        }
+
+        .modal-btn.danger {
+            background-color: var(--error);
+            color: white;
+            border: none;
+        }
+
+        /* Estilos para el input de archivo */
+        .file-upload-area {
+            border: 2px dashed rgba(255, 255, 255, 0.1);
+            border-radius: var(--border-radius);
+            padding: 30px 20px;
+            text-align: center;
+            margin-bottom: 16px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .file-upload-area:hover {
+            border-color: var(--primary);
+        }
+
+        .file-upload-icon {
+            font-size: 2rem;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+        }
+
+        .file-upload-text {
+            margin-bottom: 5px;
+        }
+
+        .file-upload-info {
+            font-size: 0.8rem;
+            color: var(--text-tertiary);
+        }
+
+        .file-details {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: var(--background-elevated);
+            border-radius: var(--border-radius);
+            font-size: 0.9rem;
+        }
+
+        /* Toasts notifications */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 9999;
+            width: calc(100% - 32px);
+            max-width: 400px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .toast {
+            padding: 12px 16px;
+            border-radius: var(--border-radius);
+            background-color: var(--background-surface);
+            color: var(--text-primary);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            display: flex;
+            align-items: center;
+            animation: toast-in 0.3s ease, toast-out 0.3s ease 4.7s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .toast.success {
+            border-left: 4px solid var(--success);
+        }
+
+        .toast.error {
+            border-left: 4px solid var(--error);
+        }
+
+        .toast.warning {
+            border-left: 4px solid var(--warning);
+        }
+
+        .toast.info {
+            border-left: 4px solid var(--primary);
+        }
+
+        .toast-progress {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 3px;
+            background-color: rgba(255, 255, 255, 0.2);
+            width: 100%;
+        }
+
+        .toast-progress::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 100%;
+            background-color: rgba(255, 255, 255, 0.5);
+            animation: toast-progress 5s linear;
+        }
+
+        @keyframes toast-progress {
+            0% {
+                width: 100%;
+            }
+            100% {
+                width: 0%;
+            }
+        }
+
+        .toast-icon {
+            margin-right: 12px;
+            font-size: 1.2rem;
+        }
+
+        .toast-content {
+            flex: 1;
+        }
+
+        .toast-title {
+            font-weight: 500;
+            margin-bottom: 2px;
+        }
+
+        .toast-message {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .toast-close {
+            color: var(--text-tertiary);
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 4px;
+            margin-left: 10px;
+        }
+
+        @keyframes toast-in {
+            from {
+                transform: translateY(-20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes toast-out {
+            from {
+                transform: translateY(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateY(-20px);
+                opacity: 0;
+            }
+        }
+
+        /* Responsive adjustments */
+        @media (min-width: 768px) {
+            .main-content {
+                padding: 0 24px 100px;
+            }
+
+            .top-bar, .search-bar {
+                padding-left: 24px;
+                padding-right: 24px;
+            }
+
+            .recently-played {
+                gap: 20px;
+            }
+
+            .recent-card {
+                width: 160px;
+            }
+
+            .recent-thumb {
+                height: 160px;
+            }
+
+            .artwork {
+                max-width: 350px;
+            }
+        }
+
+        /* Skeleton loading animation */
+        .skeleton {
+            background: linear-gradient(90deg, var(--background-surface) 25%, var(--background-elevated) 50%, var(--background-surface) 75%);
+            background-size: 200% 100%;
+            animation: skeleton-loading 1.5s infinite;
+        }
+
+        @keyframes skeleton-loading {
+            0% {
+                background-position: 200% 0;
+            }
+            100% {
+                background-position: -200% 0;
+            }
+        }
+
+        /* Utility classes */
+        .visually-hidden {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .no-tracks {
+            text-align: center;
+            padding: 40px 0;
+            color: var(--text-tertiary);
+        }
+
+        .no-tracks i {
+            font-size: 3rem;
+            margin-bottom: 16px;
+            opacity: 0.7;
+        }
+
+        .no-tracks p {
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Sección de autenticación -->
+    <div id="authSection">
+        <div class="auth-container">
+            <div class="auth-logo">
+                <h1>Full<span>Music</span></h1>
+                <p>Tu música, en cualquier lugar</p>
+            </div>
+            
+            <div class="auth-tabs">
+                <div class="auth-tab active" id="loginTab">Iniciar sesión</div>
+                <div class="auth-tab" id="registerTab">Registrarse</div>
+            </div>
+            
+            <div id="loginForm" class="auth-form">
+                <div class="form-group">
+                    <label for="loginEmail">Correo electrónico</label>
+                    <input type="email" id="loginEmail" class="form-control" placeholder="correo@ejemplo.com">
+                </div>
+                <div class="form-group">
+                    <label for="loginPassword">Contraseña</label>
+                    <input type="password" id="loginPassword" class="form-control" placeholder="Tu contraseña">
+                </div>
+                <button id="loginButton" class="auth-btn">Iniciar sesión</button>
+                
+                <div class="divider">o</div>
+                
+                <button id="googleLoginButton" class="auth-btn google">
+                    <i class="fab fa-google"></i> Continuar con Google
+                </button>
+            </div>
+            
+            <div id="registerForm" class="auth-form hidden">
+                <div class="form-group">
+                    <label for="registerEmail">Correo electrónico</label>
+                    <input type="email" id="registerEmail" class="form-control" placeholder="correo@ejemplo.com">
+                </div>
+                <div class="form-group">
+                    <label for="registerPassword">Contraseña</label>
+                    <input type="password" id="registerPassword" class="form-control" placeholder="Crea una contraseña">
+                </div>
+                <div class="form-group">
+                    <label for="registerPasswordConfirm">Confirmar contraseña</label>
+                    <input type="password" id="registerPasswordConfirm" class="form-control" placeholder="Repite la contraseña">
+                </div>
+                <button id="registerButton" class="auth-btn">Crear cuenta</button>
+                
+                <div class="divider">o</div>
+                
+                <button id="googleRegisterButton" class="auth-btn google">
+                    <i class="fab fa-google"></i> Registrarse con Google
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Aplicación principal -->
+    <div id="mainApp">
+        <!-- Barra superior -->
+        <div class="top-bar">
+            <div class="app-logo">Full<span>Music</span></div>
+            <div class="user-profile">
+                <div class="user-avatar" id="userAvatar"></div>
+                <div class="user-name" id="userInfo">Usuario</div>
+                <button class="logout-btn" id="logoutButton">
+                    <i class="fas fa-sign-out-alt"></i>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Barra de búsqueda -->
+        <div class="search-bar">
+            <div style="position: relative;">
+                <i class="fas fa-search search-icon"></i>
+                <input type="text" id="searchInput" class="search-input" placeholder="Buscar canciones o artistas...">
+            </div>
+        </div>
+        
+        <!-- Contenido principal -->
+        <div class="main-content">
+            <!-- Playlists tabs -->
+            <h2 class="section-title">Tus playlists</h2>
+            <div class="playlist-tabs" id="playlistTabs">
+                <div class="playlist-tab active" data-playlist-id="default">Todas las canciones</div>
+                <div class="create-playlist-btn" id="createPlaylistBtn">
+                    <i class="fas fa-plus"></i> Nueva
+                </div>
+            </div>
+            
+            <!-- Reproducciones recientes -->
+            <h2 class="section-title">Reproducciones recientes</h2>
+            <div class="recently-played" id="recentlyPlayed">
+                <!-- Se llenarán dinámicamente -->
+                <div class="recent-card skeleton">
+                    <div class="recent-thumb">
+                        <i class="fas fa-music"></i>
+                    </div>
+                    <div class="recent-info">
+                        <div class="recent-title skeleton" style="height: 16px; width: 80%; margin-bottom: 8px;"></div>
+                        <div class="recent-artist skeleton" style="height: 12px; width: 60%;"></div>
+                    </div>
+                </div>
+                <div class="recent-card skeleton">
+                    <div class="recent-thumb">
+                        <i class="fas fa-music"></i>
+                    </div>
+                    <div class="recent-info">
+                        <div class="recent-title skeleton" style="height: 16px; width: 80%; margin-bottom: 8px;"></div>
+                        <div class="recent-artist skeleton" style="height: 12px; width: 60%;"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Lista de canciones -->
+            <h2 class="section-title">Canciones</h2>
+            <div class="tracks-list" id="tracksList">
+                <!-- Se llenarán dinámicamente -->
+                <div class="track-item skeleton">
+                    <div class="track-thumb">
+                        <i class="fas fa-music"></i>
+                    </div>
+                    <div class="track-info">
+                        <div class="track-title skeleton" style="height: 16px; width: 80%; margin-bottom: 8px;"></div>
+                        <div class="track-artist skeleton" style="height: 12px; width: 60%;"></div>
+                    </div>
+                </div>
+                <div class="track-item skeleton">
+                    <div class="track-thumb">
+                        <i class="fas fa-music"></i>
+                    </div>
+                    <div class="track-info">
+                        <div class="track-title skeleton" style="height: 16px; width: 80%; margin-bottom: 8px;"></div>
+                        <div class="track-artist skeleton" style="height: 12px; width: 60%;"></div>
+                    </div>
+                </div>
+                <div class="track-item skeleton">
+                    <div class="track-thumb">
+                        <i class="fas fa-music"></i>
+                    </div>
+                    <div class="track-info">
+                        <div class="track-title skeleton" style="height: 16px; width: 80%; margin-bottom: 8px;"></div>
+                        <div class="track-artist skeleton" style="height: 12px; width: 60%;"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Estado sin canciones -->
+            <div class="no-tracks hidden" id="noTracks">
+                <i class="fas fa-music"></i>
+                <p>No hay canciones en esta playlist</p>
+                <button class="auth-btn" id="uploadFirstTrackBtn">
+                    <i class="fas fa-upload"></i> Subir mi primera canción
+                </button>
+            </div>
+        </div>
+        
+        <!-- Botón flotante de subir -->
+        <div class="fab-container">
+            <div class="fab-button" id="uploadButton">
+                <i class="fas fa-plus"></i>
+            </div>
+        </div>
+        
+        <!-- Reproductor mini -->
+        <div class="player-container">
+            <div class="mini-player" id="miniPlayer">
+                <div class="mini-player-track">
+                    <div class="mini-player-thumb">
+                        <i class="fas fa-music"></i>
+                    </div>
+                    <div class="mini-player-info">
+                        <div class="mini-player-title">Selecciona una canción</div>
+                        <div class="mini-player-artist">-</div>
+                    </div>
+                </div>
+                <div class="mini-player-controls">
+                    <button class="control-button" id="miniPrevButton">
+                        <i class="fas fa-step-backward"></i>
+                    </button>
+                    <button class="control-button play-pause" id="miniPlayPauseButton">
+                        <i class="fas fa-play"></i>
+                    </button>
+                    <button class="control-button" id="miniNextButton">
+                        <i class="fas fa-step-forward"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Reproductor completo -->
+            <div class="full-player" id="fullPlayer">
+                <div class="full-player-header">
+                    <button class="close-player-btn" id="closePlayerBtn">
+                        <i class="fas fa-chevron-down"></i>
+                    </button>
+                    <button class="player-mode-toggle" id="playerModeBtn">
+                        <i class="fas fa-list"></i>
+                    </button>
+                </div>
+                
+                <div class="full-player-artwork">
+                    <div class="artwork" id="playerArtwork">
+                        <div class="artwork-gradient"></div>
+                        <i class="fas fa-music"></i>
+                        <div class="artwork-overlay"></div>
+                    </div>
+                </div>
+                
+                <div class="full-player-info">
+                    <h3 class="full-player-title" id="playerTitle">Selecciona una canción</h3>
+                    <p class="full-player-artist" id="playerArtist">-</p>
+                </div>
+                
+                <div class="player-slider">
+                    <div class="progress-bar" id="progressBar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                    <div class="time-info">
+                        <span id="currentTime">0:00</span>
+                        <span id="totalTime">0:00</span>
+                    </div>
+                </div>
+                
+                <div class="full-player-controls">
+                    <button class="full-control-button" id="shuffleButton">
+                        <i class="fas fa-random"></i>
+                    </button>
+                    <button class="full-control-button" id="prevButton">
+                        <i class="fas fa-step-backward"></i>
+                    </button>
+                    <button class="full-control-button play-pause" id="playPauseButton">
+                        <i class="fas fa-play" id="playPauseIcon"></i>
+                    </button>
+                    <button class="full-control-button" id="nextButton">
+                        <i class="fas fa-step-forward"></i>
+                    </button>
+                    <button class="full-control-button" id="repeatButton">
+                        <i class="fas fa-redo"></i>
+                    </button>
+                </div>
+                
+                <div class="player-options">
+                    <button class="player-option-button" id="favoriteButton">
+                        <i class="far fa-heart"></i>
+                        <span>Favorito</span>
+                    </button>
+                    <button class="player-option-button" id="shareButton">
+                        <i class="fas fa-share-alt"></i>
+                        <span>Compartir</span>
+                    </button>
+                    <button class="player-option-button" id="playlistAddButton">
+                        <i class="fas fa-plus"></i>
+                        <span>Agregar</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal para crear playlist -->
+    <div class="modal-overlay" id="createPlaylistModal">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3 class="modal-title">Crear nueva playlist</h3>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="playlistName">Nombre de la playlist</label>
+                    <input type="text" id="playlistName" class="form-control" placeholder="Mi playlist">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn cancel" id="cancelCreatePlaylist">Cancelar</button>
+                <button class="modal-btn primary" id="confirmCreatePlaylist">Crear</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal para subir canción -->
+    <div class="modal-overlay" id="uploadTrackModal">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3 class="modal-title">Subir nueva canción</h3>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="trackTitle">Título</label>
+                    <input type="text" id="trackTitle" class="form-control" placeholder="Título de la canción">
+                </div>
+                <div class="form-group">
+                    <label for="trackArtist">Artista</label>
+                    <input type="text" id="trackArtist" class="form-control" placeholder="Nombre del artista">
+                </div>
+                <div class="form-group">
+                    <label for="trackPlaylist">Playlist</label>
+                    <select id="trackPlaylist" class="form-control">
+                        <option value="default">Todas las canciones</option>
+                        <!-- Otras opciones se cargarán dinámicamente -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Archivo de audio</label>
+                    <div class="file-upload-area" id="fileUploadArea">
+                        <i class="fas fa-music file-upload-icon"></i>
+                        <p class="file-upload-text">Arrastra un archivo de audio o haz clic para seleccionar</p>
+                        <p class="file-upload-info">Máximo 10MB</p>
+                        <input type="file" id="audioFileInput" accept="audio/*" class="hidden">
+                    </div>
+                    <div class="file-details hidden" id="fileDetails">
+                        <p id="fileName">nombre_del_archivo.mp3</p>
+                        <p id="fileSize">5.2 MB</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn cancel" id="cancelUpload">Cancelar</button>
+                <button class="modal-btn primary" id="confirmUpload">Subir</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Toast container para notificaciones -->
+    <div class="toast-container" id="toastContainer">
+        <!-- Los toasts se agregarán dinámicamente -->
+    </div>
+    
+    <!-- Firebase SDK v9 (modular) -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
+        import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, orderBy, query, onSnapshot, serverTimestamp, updateDoc } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
+        import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
+        import { getStorage, ref, uploadBytesResumable, getDownloadURL } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js';
+
+        // Firebase configuration  
+        const firebaseConfig = {
+            apiKey: "AIzaSyCmFq5ISq59Ql84Ntf_QiynlQtMX31zmwo",
+            authDomain: "fuck-musix.firebaseapp.com",
+            projectId: "fuck-musix",
+            storageBucket: "fuck-musix.appspot.com",
+            messagingSenderId: "858119028230",
+            appId: "1:858119028230:web:63dc3168ac63221a82cd87",
+            measurementId: "G-B3JK4M6STY"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+        const provider = new GoogleAuthProvider();
+        const storage = getStorage(app);
+        
+        // Configure Google provider
+        provider.addScope('profile');
+        provider.addScope('email');
+        provider.setCustomParameters({
+            prompt: 'select_account'
+        });
+
+        // Clase para gestionar notificaciones toast
+        class ToastManager {
+            constructor() {
+                this.container = document.getElementById('toastContainer');
+                this.toasts = [];
+            }
+            
+            show(options) {
+                const { title, message, type = 'info', duration = 5000 } = options;
+                
+                // Crear el elemento toast
+                const toast = document.createElement('div');
+                toast.className = `toast ${type}`;
+                
+                // Determinar el icono según el tipo
+                let icon = 'fa-info-circle';
+                if (type === 'success') icon = 'fa-check-circle';
+                if (type === 'error') icon = 'fa-exclamation-circle';
+                if (type === 'warning') icon = 'fa-exclamation-triangle';
+                
+                toast.innerHTML = `
+                    <div class="toast-icon"><i class="fas ${icon}"></i></div>
+                    <div class="toast-content">
+                        <div class="toast-title">${title}</div>
+                        ${message ? `<div class="toast-message">${message}</div>` : ''}
+                    </div>
+                    <button class="toast-close"><i class="fas fa-times"></i></button>
+                    <div class="toast-progress"></div>
+                `;
+                
+                // Agregar al container
+                this.container.appendChild(toast);
+                
+                // Agregar a la lista de toasts activos
+                this.toasts.push(toast);
+                
+                // Configurar el botón de cierre
+                const closeBtn = toast.querySelector('.toast-close');
+                closeBtn.addEventListener('click', () => this.close(toast));
+                
+                // Auto cerrar después de la duración
+                setTimeout(() => {
+                    if (this.toasts.includes(toast)) {
+                        this.close(toast);
+                    }
+                }, duration);
+                
+                return toast;
+            }
+            
+            close(toast) {
+                toast.style.animation = 'toast-out 0.3s ease forwards';
+                
+                setTimeout(() => {
+                    this.container.removeChild(toast);
+                    this.toasts = this.toasts.filter(t => t !== toast);
+                }, 300);
+            }
+            
+            success(title, message) {
+                return this.show({ title, message, type: 'success' });
+            }
+            
+            error(title, message) {
+                return this.show({ title, message, type: 'error' });
+            }
+            
+            warning(title, message) {
+                return this.show({ title, message, type: 'warning' });
+            }
+            
+            info(title, message) {
+                return this.show({ title, message, type: 'info' });
+            }
+        }
+
+        // Clase para gestionar el audio
+        class AudioPlayer {
+            constructor() {
+                this.audio = new Audio();
+                this.tracks = [];
+                this.currentTrackIndex = 0;
+                this.isPlaying = false;
+                this.isShuffled = false;
+                this.repeatMode = 'none'; // none, one, all
+                this.volume = 1.0;
+                this.setupEventListeners();
+            }
+            
+            setupEventListeners() {
+                this.audio.addEventListener('ended', () => this.handleTrackEnded());
+                this.audio.addEventListener('timeupdate', () => this.handleTimeUpdate());
+                this.audio.addEventListener('loadedmetadata', () => this.handleMetadataLoaded());
+                this.audio.addEventListener('error', (e) => this.handleError(e));
+                
+                // Elementos del reproductor
+                this.progressBar = document.getElementById('progressBar');
+                this.progressFill = document.getElementById('progressFill');
+                this.currentTimeEl = document.getElementById('currentTime');
+                this.totalTimeEl = document.getElementById('totalTime');
+                
+                // Hacer que la barra de progreso sea interactiva
+                this.progressBar.addEventListener('click', (e) => this.seek(e));
+            }
+            
+            setTracks(tracks) {
+                this.tracks = tracks;
+                
+                // Si no hay tracks, reiniciar el reproductor
+                if (tracks.length === 0) {
+                    this.currentTrackIndex = 0;
+                    this.updatePlayerInfo();
+                    return;
+                }
+                
+                // Actualizar la información del reproductor
+                this.updatePlayerInfo();
+            }
+            
+            updatePlayerInfo() {
+                const miniPlayerTitle = document.getElementById('miniPlayer').querySelector('.mini-player-title');
+                const miniPlayerArtist = document.getElementById('miniPlayer').querySelector('.mini-player-artist');
+                const playerTitle = document.getElementById('playerTitle');
+                const playerArtist = document.getElementById('playerArtist');
+                
+                if (this.tracks.length === 0) {
+                    miniPlayerTitle.textContent = 'Selecciona una canción';
+                    miniPlayerArtist.textContent = '-';
+                    playerTitle.textContent = 'Selecciona una canción';
+                    playerArtist.textContent = '-';
+                    return;
+                }
+                
+                const currentTrack = this.tracks[this.currentTrackIndex];
+                
+                miniPlayerTitle.textContent = currentTrack.title;
+                miniPlayerArtist.textContent = currentTrack.artist;
+                playerTitle.textContent = currentTrack.title;
+                playerArtist.textContent = currentTrack.artist;
+            }
+            
+            loadTrack(index) {
+                if (!this.tracks.length) return;
+                
+                this.currentTrackIndex = index;
+                
+                const track = this.tracks[index];
+                this.audio.src = track.url;
+                this.audio.load();
+                
+                this.updatePlayerInfo();
+                
+                // Actualizar la interfaz para reflejar el track actual
+                const trackItems = document.querySelectorAll('.track-item');
+                trackItems.forEach((item, i) => {
+                    if (i === index) {
+                        item.classList.add('active');
+                    } else {
+                        item.classList.remove('active');
+                    }
+                });
+                
+                // Actualizar recientes (asumiendo que se implementará esta funcionalidad)
+                this.updateRecentlyPlayed(track);
+            }
+            
+            updateRecentlyPlayed(track) {
+                // Aquí se implementaría la lógica para actualizar las reproducciones recientes
+                // Por ahora, dejamos un placeholder
+            }
+            
+            play() {
+                if (!this.tracks.length) return;
+                
+                this.audio.play()
+                    .then(() => {
+                        this.isPlaying = true;
+                        this.updatePlayPauseButtons();
+                    })
+                    .catch(error => {
+                        console.error('Error playing audio:', error);
+                        toastManager.error('Error de reproducción', 'No se pudo reproducir la canción.');
+                    });
+            }
+            
+            pause() {
+                this.audio.pause();
+                this.isPlaying = false;
+                this.updatePlayPauseButtons();
+            }
+            
+            togglePlay() {
+                if (this.isPlaying) {
+                    this.pause();
+                } else {
+                    this.play();
+                }
+            }
+            
+            updatePlayPauseButtons() {
+                const miniPlayPauseButton = document.getElementById('miniPlayPauseButton');
+                const playPauseButton = document.getElementById('playPauseButton');
+                const playPauseIcon = document.getElementById('playPauseIcon');
+                
+                if (this.isPlaying) {
+                    miniPlayPauseButton.innerHTML = '<i class="fas fa-pause"></i>';
+                    playPauseIcon.className = 'fas fa-pause';
+                } else {
+                    miniPlayPauseButton.innerHTML = '<i class="fas fa-play"></i>';
+                    playPauseIcon.className = 'fas fa-play';
+                }
+            }
+            
+            next() {
+                if (!this.tracks.length) return;
+                
+                let nextIndex;
+                
+                if (this.isShuffled) {
+                    nextIndex = Math.floor(Math.random() * this.tracks.length);
+                    // Evitar que toque la misma canción
+                    while (nextIndex === this.currentTrackIndex && this.tracks.length > 1) {
+                        nextIndex = Math.floor(Math.random() * this.tracks.length);
+                    }
+                } else {
+                    nextIndex = (this.currentTrackIndex + 1) % this.tracks.length;
+                }
+                
+                this.loadTrack(nextIndex);
+                
+                if (this.isPlaying) {
+                    this.play();
+                }
+            }
+            
+            prev() {
+                if (!this.tracks.length) return;
+                
+                // Si el tiempo actual es mayor a 3 segundos, reinicia la canción actual
+                if (this.audio.currentTime > 3) {
+                    this.audio.currentTime = 0;
+                    return;
+                }
+                
+                let prevIndex;
+                
+                if (this.isShuffled) {
+                    prevIndex = Math.floor(Math.random() * this.tracks.length);
+                    // Evitar que toque la misma canción
+                    while (prevIndex === this.currentTrackIndex && this.tracks.length > 1) {
+                        prevIndex = Math.floor(Math.random() * this.tracks.length);
+                    }
+                } else {
+                    prevIndex = (this.currentTrackIndex - 1 + this.tracks.length) % this.tracks.length;
+                }
+                
+                this.loadTrack(prevIndex);
+                
+                if (this.isPlaying) {
+                    this.play();
+                }
+            }
+            
+            toggleShuffle() {
+                this.isShuffled = !this.isShuffled;
+                const shuffleButton = document.getElementById('shuffleButton');
+                
+                if (this.isShuffled) {
+                    shuffleButton.classList.add('active');
+                } else {
+                    shuffleButton.classList.remove('active');
+                }
+            }
+            
+            toggleRepeat() {
+                const repeatButton = document.getElementById('repeatButton');
+                
+                switch (this.repeatMode) {
+                    case 'none':
+                        this.repeatMode = 'all';
+                        repeatButton.classList.add('active');
+                        repeatButton.innerHTML = '<i class="fas fa-redo"></i>';
+                        break;
+                    case 'all':
+                        this.repeatMode = 'one';
+                        repeatButton.classList.add('active');
+                        repeatButton.innerHTML = '<i class="fas fa-redo-alt"></i><span class="visually-hidden">1</span>';
+                        break;
+                    case 'one':
+                        this.repeatMode = 'none';
+                        repeatButton.classList.remove('active');
+                        repeatButton.innerHTML = '<i class="fas fa-redo"></i>';
+                        break;
+                }
+            }
+            
+            handleTrackEnded() {
+                switch (this.repeatMode) {
+                    case 'one':
+                        this.audio.currentTime = 0;
+                        this.play();
+                        break;
+                    case 'all':
+                        this.next();
+                        break;
+                    case 'none':
+                        if (this.currentTrackIndex === this.tracks.length - 1) {
+                            this.loadTrack(0);
+                            // No reproduce automáticamente al terminar toda la lista
+                        } else {
+                            this.next();
+                        }
+                        break;
+                }
+            }
+            
+            handleTimeUpdate() {
+                const currentTime = this.audio.currentTime;
+                const duration = this.audio.duration || 0;
+                
+                // Actualizar barra de progreso
+                const progressPercent = (currentTime / duration) * 100;
+                this.progressFill.style.width = `${progressPercent}%`;
+                
+                // Actualizar tiempos
+                this.currentTimeEl.textContent = this.formatTime(currentTime);
+                this.totalTimeEl.textContent = this.formatTime(duration);
+            }
+            
+            handleMetadataLoaded() {
+                const duration = this.audio.duration || 0;
+                this.totalTimeEl.textContent = this.formatTime(duration);
+            }
+            
+            handleError(e) {
+                console.error('Audio error:', e);
+                toastManager.error('Error de audio', 'No se pudo cargar la canción.');
+                // Intentar la siguiente canción
+                this.next();
+            }
+            
+            seek(e) {
+                const progressBarRect = this.progressBar.getBoundingClientRect();
+                const clickPosition = e.clientX - progressBarRect.left;
+                const progressBarWidth = progressBarRect.width;
+                const seekPercentage = clickPosition / progressBarWidth;
+                const seekTime = this.audio.duration * seekPercentage;
+                
+                this.audio.currentTime = seekTime;
+            }
+            
+            formatTime(seconds) {
+                if (isNaN(seconds) || !isFinite(seconds)) return '0:00';
+                
+                const minutes = Math.floor(seconds / 60);
+                const remainingSeconds = Math.floor(seconds % 60);
+                
+                return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+            }
+        }
+
+        // Clase para gestionar la interfaz de usuario
+        class UIManager {
+            constructor(firebaseService, audioPlayer) {
+                this.firebaseService = firebaseService;
+                this.audioPlayer = audioPlayer;
+                this.currentPlaylistId = 'default';
+                this.init();
+            }
+            
+            init() {
+                this.setupAuthTabs();
+                this.setupLoginForm();
+                this.setupRegisterForm();
+                this.setupLogout();
+                this.setupPlayer();
+                this.setupUpload();
+                this.setupCreatePlaylist();
+                this.setupSearch();
+                this.setupFileUpload();
+            }
+            
+            setupAuthTabs() {
+                const loginTab = document.getElementById('loginTab');
+                const registerTab = document.getElementById('registerTab');
+                const loginForm = document.getElementById('loginForm');
+                const registerForm = document.getElementById('registerForm');
+                
+                loginTab.addEventListener('click', () => {
+                    loginTab.classList.add('active');
+                    registerTab.classList.remove('active');
+                    loginForm.classList.remove('hidden');
+                    registerForm.classList.add('hidden');
+                });
+                
+                registerTab.addEventListener('click', () => {
+                    registerTab.classList.add('active');
+                    loginTab.classList.remove('active');
+                    registerForm.classList.remove('hidden');
+                    loginForm.classList.add('hidden');
+                });
+            }
+            
+            setupLoginForm() {
+                const loginButton = document.getElementById('loginButton');
+                const googleLoginButton = document.getElementById('googleLoginButton');
+                const loginEmail = document.getElementById('loginEmail');
+                const loginPassword = document.getElementById('loginPassword');
+                
+                loginButton.addEventListener('click', async () => {
+                    const email = loginEmail.value.trim();
+                    const password = loginPassword.value;
+                    
+                    if (!email || !password) {
+                        toastManager.warning('Campos incompletos', 'Por favor, ingresa tu correo y contraseña.');
+                        return;
+                    }
+                    
+                    try {
+                        loginButton.disabled = true;
+                        await this.firebaseService.signInWithEmail(email, password);
+                        // El cambio de vista es manejado por el listener de autenticación
+                    } catch (error) {
+                        console.error('Error de inicio de sesión:', error);
+                        let errorMessage = 'Ocurrió un error al iniciar sesión.';
+                        
+                        if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+                            errorMessage = 'Correo o contraseña incorrectos.';
+                        } else if (error.code === 'auth/too-many-requests') {
+                            errorMessage = 'Demasiados intentos fallidos. Inténtalo más tarde.';
+                        } else if (error.code === 'auth/invalid-email') {
+                            errorMessage = 'Correo electrónico inválido.';
+                        }
+                        
+                        toastManager.error('Error de inicio de sesión', errorMessage);
+                        loginButton.disabled = false;
+                    }
+                });
+                
+                googleLoginButton.addEventListener('click', async () => {
+                    try {
+                        googleLoginButton.disabled = true;
+                        await this.firebaseService.signInWithGoogle();
+                        // El cambio de vista es manejado por el listener de autenticación
+                    } catch (error) {
+                        console.error('Error de inicio de sesión con Google:', error);
+                        toastManager.error('Error de inicio de sesión', 'No se pudo iniciar sesión con Google.');
+                        googleLoginButton.disabled = false;
+                    }
+                });
+            }
+            
+            setupRegisterForm() {
+                const registerButton = document.getElementById('registerButton');
+                const googleRegisterButton = document.getElementById('googleRegisterButton');
+                const registerEmail = document.getElementById('registerEmail');
+                const registerPassword = document.getElementById('registerPassword');
+                const registerPasswordConfirm = document.getElementById('registerPasswordConfirm');
+                
+                registerButton.addEventListener('click', async () => {
+                    const email = registerEmail.value.trim();
+                    const password = registerPassword.value;
+                    const passwordConfirm = registerPasswordConfirm.value;
+                    
+                    if (!email || !password || !passwordConfirm) {
+                        toastManager.warning('Campos incompletos', 'Por favor, completa todos los campos.');
+                        return;
+                    }
+                    
+                    if (password !== passwordConfirm) {
+                        toastManager.warning('Contraseñas no coinciden', 'Las contraseñas ingresadas no coinciden.');
+                        return;
+                    }
+                    
+                    if (password.length < 6) {
+                        toastManager.warning('Contraseña débil', 'La contraseña debe tener al menos 6 caracteres.');
+                        return;
+                    }
+                    
+                    try {
+                        registerButton.disabled = true;
+                        await this.firebaseService.signUpWithEmail(email, password);
+                        toastManager.success('Registro exitoso', 'Tu cuenta ha sido creada correctamente.');
+                        // El cambio de vista es manejado por el listener de autenticación
+                    } catch (error) {
+                        console.error('Error de registro:', error);
+                        let errorMessage = 'Ocurrió un error al crear la cuenta.';
+                        
+                        if (error.code === 'auth/email-already-in-use') {
+                            errorMessage = 'Este correo electrónico ya está en uso.';
+                        } else if (error.code === 'auth/invalid-email') {
+                            errorMessage = 'Correo electrónico inválido.';
+                        } else if (error.code === 'auth/weak-password') {
+                            errorMessage = 'La contraseña es demasiado débil.';
+                        }
+                        
+                        toastManager.error('Error de registro', errorMessage);
+                        registerButton.disabled = false;
+                    }
+                });
+                
+                googleRegisterButton.addEventListener('click', async () => {
+                    try {
+                        googleRegisterButton.disabled = true;
+                        await this.firebaseService.signInWithGoogle();
+                        // El cambio de vista es manejado por el listener de autenticación
+                    } catch (error) {
+                        console.error('Error de registro con Google:', error);
+                        toastManager.error('Error de registro', 'No se pudo registrar con Google.');
+                        googleRegisterButton.disabled = false;
+                    }
+                });
+            }
+            
+            setupLogout() {
+                const logoutButton = document.getElementById('logoutButton');
+                
+                logoutButton.addEventListener('click', async () => {
+                    try {
+                        await this.firebaseService.signOut();
+                        toastManager.success('Sesión cerrada', 'Has cerrado sesión correctamente.');
+                    } catch (error) {
+                        console.error('Error al cerrar sesión:', error);
+                        toastManager.error('Error', 'No se pudo cerrar sesión.');
+                    }
+                });
+            }
+            
+            setupPlayer() {
+                const miniPlayer = document.getElementById('miniPlayer');
+                const fullPlayer = document.getElementById('fullPlayer');
+                const closePlayerBtn = document.getElementById('closePlayerBtn');
+                
+                // Botones de control mini player
+                const miniPlayPauseButton = document.getElementById('miniPlayPauseButton');
+                const miniPrevButton = document.getElementById('miniPrevButton');
+                const miniNextButton = document.getElementById('miniNextButton');
+                
+                // Botones de control full player
+                const playPauseButton = document.getElementById('playPauseButton');
+                const prevButton = document.getElementById('prevButton');
+                const nextButton = document.getElementById('nextButton');
+                const shuffleButton = document.getElementById('shuffleButton');
+                const repeatButton = document.getElementById('repeatButton');
+                
+                // Abrir reproductor completo al hacer clic en el mini player
+                miniPlayer.addEventListener('click', (e) => {
+                    // Evitar que los clics en los controles abran el reproductor completo
+                    if (e.target.closest('.mini-player-controls')) return;
+                    
+                    fullPlayer.classList.add('active');
+                });
+                
+                // Cerrar reproductor completo
+                closePlayerBtn.addEventListener('click', () => {
+                    fullPlayer.classList.remove('active');
+                });
+                
+                // Controles del mini player
+                miniPlayPauseButton.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.audioPlayer.togglePlay();
+                });
+                
+                miniPrevButton.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.audioPlayer.prev();
+                });
+                
+                miniNextButton.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.audioPlayer.next();
+                });
+                
+                // Controles del reproductor completo
+                playPauseButton.addEventListener('click', () => {
+                    this.audioPlayer.togglePlay();
+                });
+                
+                prevButton.addEventListener('click', () => {
+                    this.audioPlayer.prev();
+                });
+                
+                nextButton.addEventListener('click', () => {
+                    this.audioPlayer.next();
+                });
+                
+                shuffleButton.addEventListener('click', () => {
+                    this.audioPlayer.toggleShuffle();
+                });
+                
+                repeatButton.addEventListener('click', () => {
+                    this.audioPlayer.toggleRepeat();
+                });
+                
+                // Botones de opciones adicionales
+                const favoriteButton = document.getElementById('favoriteButton');
+                const shareButton = document.getElementById('shareButton');
+                
+                favoriteButton.addEventListener('click', () => {
+                    if (favoriteButton.querySelector('i').classList.contains('far')) {
+                        favoriteButton.querySelector('i').classList.remove('far');
+                        favoriteButton.querySelector('i').classList.add('fas');
+                        favoriteButton.classList.add('active');
+                        toastManager.success('Añadido a favoritos', 'Canción añadida a tus favoritos.');
+                    } else {
+                        favoriteButton.querySelector('i').classList.remove('fas');
+                        favoriteButton.querySelector('i').classList.add('far');
+                        favoriteButton.classList.remove('active');
+                        toastManager.info('Eliminado de favoritos', 'Canción eliminada de tus favoritos.');
+                    }
+                });
+                
+                shareButton.addEventListener('click', () => {
+                    if (navigator.share && this.audioPlayer.tracks.length > 0) {
+                        const currentTrack = this.audioPlayer.tracks[this.audioPlayer.currentTrackIndex];
+                        navigator.share({
+                            title: currentTrack.title,
+                            text: `Escuchando ${currentTrack.title} de ${currentTrack.artist} en FullMusic`,
+                            url: window.location.href
+                        })
+                        .then(() => console.log('Contenido compartido exitosamente'))
+                        .catch((error) => console.log('Error compartiendo:', error));
+                    } else {
+                        toastManager.info('Compartir', 'Función de compartir no disponible en este dispositivo.');
+                    }
+                });
+            }
+            
+            setupUpload() {
+                const uploadButton = document.getElementById('uploadButton');
+                const uploadTrackModal = document.getElementById('uploadTrackModal');
+                const cancelUpload = document.getElementById('cancelUpload');
+                const confirmUpload = document.getElementById('confirmUpload');
+                const uploadFirstTrackBtn = document.getElementById('uploadFirstTrackBtn');
+                
+                // Abrir modal de subida
+                uploadButton.addEventListener('click', () => {
+                    this.openUploadModal();
+                });
+                
+                uploadFirstTrackBtn.addEventListener('click', () => {
+                    this.openUploadModal();
+                });
+                
+                // Cerrar modal de subida
+                cancelUpload.addEventListener('click', () => {
+                    uploadTrackModal.style.display = 'none';
+                    this.resetUploadForm();
+                });
+                
+                // Confirmar subida
+                confirmUpload.addEventListener('click', async () => {
+                    const titleInput = document.getElementById('trackTitle');
+                    const artistInput = document.getElementById('trackArtist');
+                    const playlistSelect = document.getElementById('trackPlaylist');
+                    const fileInput = document.getElementById('audioFileInput');
+                    
+                    const title = titleInput.value.trim();
+                    const artist = artistInput.value.trim();
+                    const playlistId = playlistSelect.value;
+                    const file = fileInput.files[0];
+                    
+                    if (!title || !artist || !file) {
+                        toastManager.warning('Campos incompletos', 'Por favor, completa todos los campos y selecciona un archivo.');
+                        return;
+                    }
+                    
+                    // Deshabilitar botón para evitar múltiples envíos
+                    confirmUpload.disabled = true;
+                    confirmUpload.textContent = 'Subiendo...';
+                    
+                    try {
+                        // Referencia al storage de Firebase
+                        const audioRef = ref(storage, `audio/${Date.now()}_${file.name}`);
+                        
+                        // Subir archivo
+                        const uploadTask = uploadBytesResumable(audioRef, file);
+                        
+                        // Evento de progreso
+                        uploadTask.on('state_changed', 
+                            (snapshot) => {
+                                const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                                console.log('Upload progress:', progress);
+                            },
+                            (error) => {
+                                console.error('Error uploading file:', error);
+                                toastManager.error('Error de subida', 'No se pudo subir el archivo de audio.');
+                                confirmUpload.disabled = false;
+                                confirmUpload.textContent = 'Subir';
+                            },
+                            async () => {
+                                // Subida completada, obtener URL
+                                const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+                                
+                                // Guardar información en Firestore
+                                await this.firebaseService.addTrack({
+                                    title,
+                                    artist,
+                                    url: downloadURL,
+                                    playlist: playlistId,
+                                    fileName: file.name,
+                                    fileSize: file.size,
+                                    duration: 0, // Se actualizará cuando se reproduzca
+                                    playCount: 0
+                                });
+                                
+                                toastManager.success('Subida exitosa', 'La canción se ha subido correctamente.');
+                                
+                                // Cerrar modal y reiniciar formulario
+                                uploadTrackModal.style.display = 'none';
+                                this.resetUploadForm();
+                                
+                                // Recargar tracks
+                                this.loadTracks();
+                            }
+                        );
+                        
+                    } catch (error) {
+                        console.error('Error en el proceso de subida:', error);
+                        toastManager.error('Error', 'Ocurrió un error al subir la canción.');
+                        confirmUpload.disabled = false;
+                        confirmUpload.textContent = 'Subir';
+                    }
+                });
+            }
+            
+            openUploadModal() {
+                const uploadTrackModal = document.getElementById('uploadTrackModal');
+                const trackPlaylist = document.getElementById('trackPlaylist');
+                
+                // Limpiar y actualizar opciones de playlist
+                trackPlaylist.innerHTML = '<option value="default">Todas las canciones</option>';
+                
+                // Cargar playlists disponibles
+                this.firebaseService.getPlaylists().then(playlists => {
+                    playlists.forEach(playlist => {
+                        if (playlist.id !== 'default') {
+                            const option = document.createElement('option');
+                            option.value = playlist.id;
+                            option.textContent = playlist.name;
+                            trackPlaylist.appendChild(option);
+                        }
+                    });
+                    
+                    // Preseleccionar playlist actual
+                    trackPlaylist.value = this.currentPlaylistId;
+                    
+                    // Mostrar modal
+                    uploadTrackModal.style.display = 'flex';
+                });
+            }
+            
+            resetUploadForm() {
+                document.getElementById('trackTitle').value = '';
+                document.getElementById('trackArtist').value = '';
+                document.getElementById('audioFileInput').value = '';
+                document.getElementById('fileDetails').classList.add('hidden');
+            }
+            
+            setupCreatePlaylist() {
+                const createPlaylistBtn = document.getElementById('createPlaylistBtn');
+                const createPlaylistModal = document.getElementById('createPlaylistModal');
+                const cancelCreatePlaylist = document.getElementById('cancelCreatePlaylist');
+                const confirmCreatePlaylist = document.getElementById('confirmCreatePlaylist');
+                
+                // Abrir modal de crear playlist
+                createPlaylistBtn.addEventListener('click', () => {
+                    createPlaylistModal.style.display = 'flex';
+                });
+                
+                // Cerrar modal
+                cancelCreatePlaylist.addEventListener('click', () => {
+                    createPlaylistModal.style.display = 'none';
+                    document.getElementById('playlistName').value = '';
+                });
+                
+                // Confirmar creación
+                confirmCreatePlaylist.addEventListener('click', async () => {
+                    const playlistNameInput = document.getElementById('playlistName');
+                    const playlistName = playlistNameInput.value.trim();
+                    
+                    if (!playlistName) {
+                        toastManager.warning('Campo vacío', 'Por favor, ingresa un nombre para la playlist.');
+                        return;
+                    }
+                    
+                    confirmCreatePlaylist.disabled = true;
+                    
+                    try {
+                        await this.firebaseService.createPlaylist(playlistName);
+                        toastManager.success('Playlist creada', `La playlist "${playlistName}" se ha creado correctamente.`);
+                        
+                        // Cerrar modal y reiniciar formulario
+                        createPlaylistModal.style.display = 'none';
+                        playlistNameInput.value = '';
+                        
+                        // Recargar playlists
+                        this.loadPlaylists();
+                    } catch (error) {
+                        console.error('Error al crear playlist:', error);
+                        toastManager.error('Error', 'No se pudo crear la playlist.');
+                    } finally {
+                        confirmCreatePlaylist.disabled = false;
+                    }
+                });
+                
+                // Configurar selector de playlists
+                this.setupPlaylistTabs();
+            }
+            
+            setupPlaylistTabs() {
+                const playlistTabs = document.getElementById('playlistTabs');
+                
+                // Evento de delegación para las pestañas de playlist
+                playlistTabs.addEventListener('click', (e) => {
+                    const tab = e.target.closest('.playlist-tab');
+                    
+                    if (tab) {
+                        // Quitar clase active de todas las pestañas
+                        const tabs = playlistTabs.querySelectorAll('.playlist-tab');
+                        tabs.forEach(t => t.classList.remove('active'));
+                        
+                        // Agregar clase active a la pestaña seleccionada
+                        tab.classList.add('active');
+                        
+                        // Obtener ID de la playlist
+                        const playlistId = tab.dataset.playlistId;
+                        this.currentPlaylistId = playlistId;
+                        
+                        // Cargar tracks de la playlist seleccionada
+                        this.loadTracks();
+                    }
+                });
+            }
+            
+            setupSearch() {
+                const searchInput = document.getElementById('searchInput');
+                
+                searchInput.addEventListener('input', () => {
+                    const searchTerm = searchInput.value.trim().toLowerCase();
+                    
+                    // Filtrar tracks visibles según el término de búsqueda
+                    const trackItems = document.querySelectorAll('.track-item');
+                    
+                    trackItems.forEach(item => {
+                        const title = item.querySelector('.track-title').textContent.toLowerCase();
+                        const artist = item.querySelector('.track-artist').textContent.toLowerCase();
+                        
+                        if (title.includes(searchTerm) || artist.includes(searchTerm)) {
+                            item.style.display = 'flex';
+                        } else {
+                            item.style.display = 'none';
+                        }
+                    });
+                    
+                    // Mostrar mensaje si no hay resultados
+                    const visibleTracks = document.querySelectorAll('.track-item[style="display: flex"]');
+                    const noTracksEl = document.getElementById('noTracks');
+                    
+                    if (visibleTracks.length === 0 && searchTerm) {
+                        noTracksEl.classList.remove('hidden');
+                        noTracksEl.querySelector('p').textContent = 'No se encontraron resultados para tu búsqueda';
+                        noTracksEl.querySelector('button').classList.add('hidden');
+                    } else {
+                        noTracksEl.classList.add('hidden');
+                    }
+                });
+            }
+            
+            setupFileUpload() {
+                const fileUploadArea = document.getElementById('fileUploadArea');
+                const audioFileInput = document.getElementById('audioFileInput');
+                const fileDetails = document.getElementById('fileDetails');
+                const fileName = document.getElementById('fileName');
+                const fileSize = document.getElementById('fileSize');
+                
+                // Abrir selector de archivos al hacer clic
+                fileUploadArea.addEventListener('click', () => {
+                    audioFileInput.click();
+                });
+                
+                // Manejar cambio de archivo
+                audioFileInput.addEventListener('change', () => {
+                    const file = audioFileInput.files[0];
+                    
+                    if (file) {
+                        // Validar tipo de archivo
+                        if (!file.type.includes('audio/')) {
+                            toastManager.warning('Tipo de archivo inválido', 'Por favor, selecciona un archivo de audio (MP3, WAV, etc.)');
+                            audioFileInput.value = '';
+                            return;
+                        }
+                        
+                        // Validar tamaño (10MB máximo)
+                        const maxSize = 10 * 1024 * 1024; // 10MB
+                        if (file.size > maxSize) {
+                            toastManager.warning('Archivo demasiado grande', 'El tamaño máximo permitido es 10MB');
+                            audioFileInput.value = '';
+                            return;
+                        }
+                        
+                        // Mostrar detalles
+                        fileName.textContent = file.name;
+                        fileSize.textContent = `${(file.size / (1024 * 1024)).toFixed(2)} MB`;
+                        fileDetails.classList.remove('hidden');
+                    } else {
+                        fileDetails.classList.add('hidden');
+                    }
+                });
+                
+                // Drag and drop
+                fileUploadArea.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    fileUploadArea.style.borderColor = 'var(--primary)';
+                });
+                
+                fileUploadArea.addEventListener('dragleave', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    fileUploadArea.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+                });
+                
+                fileUploadArea.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    fileUploadArea.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+                    
+                    const file = e.dataTransfer.files[0];
+                    
+                    if (file) {
+                        // Validar tipo
+                        if (!file.type.includes('audio/')) {
+                            toastManager.warning('Tipo de archivo inválido', 'Por favor, selecciona un archivo de audio (MP3, WAV, etc.)');
+                            return;
+                        }
+                        
+                        // Validar tamaño
+                        const maxSize = 10 * 1024 * 1024; // 10MB
+                        if (file.size > maxSize) {
+                            toastManager.warning('Archivo demasiado grande', 'El tamaño máximo permitido es 10MB');
+                            return;
+                        }
+                        
+                        // Asignar archivo al input
+                        const dataTransfer = new DataTransfer();
+                        dataTransfer.items.add(file);
+                        audioFileInput.files = dataTransfer.files;
+                        
+                        // Mostrar detalles
+                        fileName.textContent = file.name;
+                        fileSize.textContent = `${(file.size / (1024 * 1024)).toFixed(2)} MB`;
+                        fileDetails.classList.remove('hidden');
+                    }
+                });
+            }
+            
+            async loadPlaylists() {
+                try {
+                    const playlists = await this.firebaseService.getPlaylists();
+                    const playlistTabs = document.getElementById('playlistTabs');
+                    
+                    // Mantener sólo el botón de crear playlist
+                    const createPlaylistBtn = playlistTabs.querySelector('.create-playlist-btn');
+                    playlistTabs.innerHTML = '';
+                    playlistTabs.appendChild(createPlaylistBtn);
+                    
+                    // Agregar tabs para cada playlist
+                    playlists.forEach(playlist => {
+                        const tab = document.createElement('div');
+                        tab.className = 'playlist-tab';
+                        tab.textContent = playlist.name;
+                        tab.dataset.playlistId = playlist.id;
+                        
+                        if (playlist.id === this.currentPlaylistId) {
+                            tab.classList.add('active');
+                        }
+                        
+                        playlistTabs.insertBefore(tab, createPlaylistBtn);
+                    });
+                } catch (error) {
+                    console.error('Error al cargar playlists:', error);
+                    toastManager.error('Error', 'No se pudieron cargar las playlists.');
+                }
+            }
+            
+            async loadTracks() {
+                try {
+                    const tracks = await this.firebaseService.getAllTracks();
+                    const tracksList = document.getElementById('tracksList');
+                    const noTracks = document.getElementById('noTracks');
+                    
+                    // Filtrar por playlist actual si no es 'default'
+                    const filteredTracks = this.currentPlaylistId === 'default' 
+                        ? tracks 
+                        : tracks.filter(track => track.playlist === this.currentPlaylistId);
+                    
+                    // Actualizar UI
+                    tracksList.innerHTML = '';
+                    
+                    if (filteredTracks.length === 0) {
+                        tracksList.classList.add('hidden');
+                        noTracks.classList.remove('hidden');
+                        noTracks.querySelector('p').textContent = 'No hay canciones en esta playlist';
+                        noTracks.querySelector('button').classList.remove('hidden');
+                        return;
+                    }
+                    
+                    tracksList.classList.remove('hidden');
+                    noTracks.classList.add('hidden');
+                    
+                    // Crear elementos para cada track
+                    filteredTracks.forEach((track, index) => {
+                        const trackElement = this.createTrackElement(track, index);
+                        tracksList.appendChild(trackElement);
+                    });
+                    
+                    // Actualizar lista de tracks en el reproductor
+                    this.audioPlayer.setTracks(filteredTracks);
+                    
+                    // Cargar reproducciones recientes
+                    this.loadRecentlyPlayed(tracks);
+                } catch (error) {
+                    console.error('Error al cargar tracks:', error);
+                    toastManager.error('Error', 'No se pudieron cargar las canciones.');
+                }
+            }
+            
+            createTrackElement(track, index) {
+                const trackItem = document.createElement('div');
+                trackItem.className = 'track-item';
+                trackItem.dataset.index = index;
+                trackItem.dataset.id = track.id;
+                
+                trackItem.innerHTML = `
+                    <div class="track-thumb">
+                        <i class="fas fa-music"></i>
+                    </div>
+                    <div class="track-info">
+                        <div class="track-title">${track.title}</div>
+                        <div class="track-artist">${track.artist}</div>
+                    </div>
+                    <div class="track-actions">
+                        <i class="fas fa-ellipsis-v"></i>
+                    </div>
+                `;
+                
+                // Evento para reproducir al hacer clic
+                trackItem.addEventListener('click', () => {
+                    this.audioPlayer.loadTrack(index);
+                    this.audioPlayer.play();
+                });
+                
+                return trackItem;
+            }
+            
+            loadRecentlyPlayed(allTracks) {
+                const recentlyPlayed = document.getElementById('recentlyPlayed');
+                recentlyPlayed.innerHTML = '';
+                
+                // Por ahora, simplemente mostrar los 5 primeros tracks
+                // En una implementación real, se guardaría un historial de reproducciones
+                const recentTracks = allTracks.slice(0, 5);
+                
+                if (recentTracks.length === 0) {
+                    const noRecents = document.createElement('div');
+                    noRecents.className = 'no-tracks';
+                    noRecents.innerHTML = `
+                        <p>No hay reproducciones recientes</p>
+                    `;
+                    recentlyPlayed.appendChild(noRecents);
+                    return;
+                }
+                
+                recentTracks.forEach((track, index) => {
+                    const recentCard = document.createElement('div');
+                    recentCard.className = 'recent-card';
+                    recentCard.dataset.index = index;
+                    
+                    recentCard.innerHTML = `
+                        <div class="recent-thumb">
+                            <i class="fas fa-music"></i>
+                        </div>
+                        <div class="recent-info">
+                            <div class="recent-title">${track.title}</div>
+                            <div class="recent-artist">${track.artist}</div>
+                        </div>
+                    `;
+                    
+                    // Evento para reproducir al hacer clic
+                    recentCard.addEventListener('click', () => {
+                        // Si estamos en una playlist diferente, cambiar a 'Todas las canciones'
+                        if (this.currentPlaylistId !== 'default') {
+                            const defaultTab = document.querySelector(`.playlist-tab[data-playlist-id="default"]`);
+                            if (defaultTab) {
+                                defaultTab.click();
+                            }
+                        }
+                        
+                        // Buscar el índice real en la lista completa
+                        const allTracksList = document.getElementById('tracksList');
+                        const trackItems = allTracksList.querySelectorAll('.track-item');
+                        let trackIndex = -1;
+                        
+                        trackItems.forEach((item, idx) => {
+                            if (item.dataset.id === track.id) {
+                                trackIndex = idx;
+                            }
+                        });
+                        
+                        if (trackIndex !== -1) {
+                            this.audioPlayer.loadTrack(trackIndex);
+                            this.audioPlayer.play();
+                        }
+                    });
+                    
+                    recentlyPlayed.appendChild(recentCard);
+                });
+            }
+        }
+
+        // Clase Firebase Service
+        class FirebaseService {
+            constructor() {
+                this.tracksCollection = collection(db, 'tracks');
+                this.currentUser = null;
+                this.setupAuth();
+            }
+
+            setupAuth() {
+                onAuthStateChanged(auth, (user) => {
+                    this.currentUser = user;
+                    const authSection = document.getElementById('authSection');
+                    const mainApp = document.getElementById('mainApp');
+                    const userInfo = document.getElementById('userInfo');
+                    const userAvatar = document.getElementById('userAvatar');
+                    
+                    if (user) {
+                        console.log('Usuario autenticado:', user.displayName || user.email);
+                        
+                        // Actualizar UI para usuario autenticado
+                        authSection.style.display = 'none';
+                        mainApp.style.display = 'flex';
+                        
+                        // Mostrar info del usuario
+                        userInfo.textContent = user.displayName || user.email.split('@')[0];
+                        
+                        // Mostrar inicial del usuario en el avatar
+                        const initial = (user.displayName || user.email)[0].toUpperCase();
+                        userAvatar.textContent = initial;
+                        
+                        // Cargar datos del usuario
+                        window.uiManager?.loadPlaylists();
+                        window.uiManager?.loadTracks();
+                    } else {
+                        console.log('Usuario no autenticado');
+                        
+                        // Actualizar UI para usuario no autenticado
+                        authSection.style.display = 'flex';
+                        mainApp.style.display = 'none';
+                    }
+                });
+            }
+
+            async signInWithGoogle() {
+                try {
+                    console.log('Intentando iniciar sesión con Google...');
+                    const result = await signInWithPopup(auth, provider);
+                    console.log('Inicio de sesión exitoso:', result.user);
+                    return result.user;
+                } catch (error) {
+                    console.error('Error en autenticación con Google:', error);
+                    throw error;
+                }
+            }
+
+            async signInWithEmail(email, password) {
+                try {
+                    const result = await signInWithEmailAndPassword(auth, email, password);
+                    console.log('Inicio de sesión exitoso:', result.user);
+                    return result.user;
+                } catch (error) {
+                    console.error('Error en autenticación con email:', error);
+                    throw error;
+                }
+            }
+
+            async signUpWithEmail(email, password) {
+                try {
+                    const result = await createUserWithEmailAndPassword(auth, email, password);
+                    console.log('Registro exitoso:', result.user);
+                    return result.user;
+                } catch (error) {
+                    console.error('Error en registro con email:', error);
+                    throw error;
+                }
+            }
+
+            async signOut() {
+                try {
+                    await signOut(auth);
+                    console.log('Sesión cerrada');
+                } catch (error) {
+                    console.error('Error al cerrar sesión:', error);
+                    throw error;
+                }
+            }
+
+            async addTrack(trackData) {
+                if (!this.currentUser) throw new Error('Usuario no autenticado');
+                
+                try {
+                    const docRef = await addDoc(this.tracksCollection, {
+                        ...trackData,
+                        userId: this.currentUser.uid,
+                        createdAt: serverTimestamp(),
+                        updatedAt: serverTimestamp()
+                    });
+                    console.log('Track added with ID:', docRef.id);
+                    return docRef.id;
+                } catch (error) {
+                    console.error('Error adding track:', error);
+                    throw error;
+                }
+            }
+
+            async createPlaylist(name) {
+                if (!this.currentUser) throw new Error('Usuario no autenticado');
+                
+                try {
+                    const playlistsCollection = collection(db, 'playlists');
+                    const docRef = await addDoc(playlistsCollection, {
+                        name: name,
+                        userId: this.currentUser.uid,
+                        createdAt: serverTimestamp()
+                    });
+                    console.log('Playlist created with ID:', docRef.id);
+                    return docRef.id;
+                } catch (error) {
+                    console.error('Error creating playlist:', error);
+                    throw error;
+                }
+            }
+
+            async getPlaylists() {
+                if (!this.currentUser) return [];
+                
+                try {
+                    const playlistsCollection = collection(db, 'playlists');
+                    const q = query(playlistsCollection, orderBy('createdAt', 'desc'));
+                    const snapshot = await getDocs(q);
+                    
+                    const playlists = [];
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        if (data.userId === this.currentUser.uid) {
+                            playlists.push({
+                                id: doc.id,
+                                ...data
+                            });
+                        }
+                    });
+                    
+                    return [{ id: 'default', name: 'Todas las canciones' }, ...playlists];
+                } catch (error) {
+                    console.error('Error getting playlists:', error);
+                    throw error;
+                }
+            }
+
+            async getAllTracks() {
+                if (!this.currentUser) return [];
+                
+                try {
+                    const q = query(this.tracksCollection, orderBy('createdAt', 'desc'));
+                    const snapshot = await getDocs(q);
+                    
+                    const tracks = [];
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        if (data.userId === this.currentUser.uid) {
+                            tracks.push({
+                                id: doc.id,
+                                ...data
+                            });
+                        }
+                    });
+                    
+                    console.log('Retrieved tracks:', tracks.length);
+                    return tracks;
+                } catch (error) {
+                    console.error('Error getting tracks:', error);
+                    throw error;
+                }
+            }
+
+            async deleteTrack(trackId) {
+                if (!this.currentUser) throw new Error('Usuario no autenticado');
+                
+                try {
+                    await deleteDoc(doc(db, 'tracks', trackId));
+                    console.log('Track deleted:', trackId);
+                } catch (error) {
+                    console.error('Error deleting track:', error);
+                    throw error;
+                }
+            }
+
+            async updateTrackPlayCount(trackId) {
+                if (!this.currentUser) throw new Error('Usuario no autenticado');
+                
+                try {
+                    const trackRef = doc(db, 'tracks', trackId);
+                    await updateDoc(trackRef, {
+                        playCount: increment(1),
+                        lastPlayed: serverTimestamp()
+                    });
+                } catch (error) {
+                    console.error('Error updating play count:', error);
+                }
+            }
+        }
+
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', function() {
+            // Crear instancias
+            window.toastManager = new ToastManager();
+            window.firebaseService = new FirebaseService();
+            window.audioPlayer = new AudioPlayer();
+            window.uiManager = new UIManager(window.firebaseService, window.audioPlayer);
+            
+            // Mensaje de bienvenida
+            window.toastManager.info('Bienvenido a FullMusic', 'Tu reproductor de música web optimizado para móviles');
+        });
+    </script>
+</body>
+</html>
