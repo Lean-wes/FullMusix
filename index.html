@@ -62,26 +62,33 @@
             setupAuth() {
                 onAuthStateChanged(auth, (user) => {
                     this.currentUser = user;
+                    const authSection = document.getElementById('authSection');
+                    const mainApp = document.getElementById('mainApp');
+                    const userInfo = document.getElementById('userInfo');
+                    
                     if (user) {
                         console.log('Usuario autenticado:', user.displayName);
-                        document.getElementById('authSection').style.display = 'none';
-                        document.getElementById('mainApp').style.display = 'block';
-                        document.getElementById('userInfo').textContent = user.displayName;
+                        if (authSection) authSection.style.display = 'none';
+                        if (mainApp) mainApp.style.display = 'block';
+                        if (userInfo) userInfo.textContent = user.displayName || user.email;
                         window.musicApp?.loadTracks();
                     } else {
                         console.log('Usuario no autenticado');
-                        document.getElementById('authSection').style.display = 'block';
-                        document.getElementById('mainApp').style.display = 'none';
+                        if (authSection) authSection.style.display = 'flex';
+                        if (mainApp) mainApp.style.display = 'none';
                     }
                 });
             }
 
             async signInWithGoogle() {
                 try {
+                    console.log('Intentando iniciar sesión...');
                     const result = await signInWithPopup(auth, provider);
+                    console.log('Inicio de sesión exitoso:', result.user);
                     return result.user;
                 } catch (error) {
                     console.error('Error en autenticación:', error);
+                    alert('Error al iniciar sesión: ' + error.message);
                     throw error;
                 }
             }
@@ -615,6 +622,14 @@
             min-height: 100vh;
             text-align: center;
             padding: 20px;
+            width: 100%;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #121212;
+            z-index: 1000;
         }
 
         .auth-button {
@@ -1291,9 +1306,18 @@
 
             async signInWithGoogle() {
                 try {
+                    const btn = document.getElementById('googleSignInBtn');
+                    btn.disabled = true;
+                    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Iniciando sesión...';
+                    
                     await window.firebaseService.signInWithGoogle();
                 } catch (error) {
-                    this.showMessage('Error al iniciar sesión: ' + error.message, 'error');
+                    console.error('Error al iniciar sesión:', error);
+                    alert('Error al iniciar sesión: ' + error.message);
+                    
+                    const btn = document.getElementById('googleSignInBtn');
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fab fa-google"></i> Iniciar sesión con Google';
                 }
             }
 
@@ -1603,4 +1627,4 @@
         });
     </script>
 </body>
-  </html>
+    </html>
