@@ -1,0 +1,1572 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>𝐅𝐮𝐥𝐥 𝐌ยรเא</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Firebase SDK v9 (modular) -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
+        import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, orderBy, query, onSnapshot, serverTimestamp, updateDoc } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
+        import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
+
+        // Firebase configuration  
+        const firebaseConfig = {
+            apiKey: "AIzaSyCmFq5ISq59Ql84Ntf_QiynlQtMX31zmwo",
+            authDomain: "fuck-musix.firebaseapp.com",
+            projectId: "fuck-musix",
+            storageBucket: "fuck-musix.firebasestorage.app",
+            messagingSenderId: "858119028230",
+            appId: "1:858119028230:web:63dc3168ac63221a82cd87",
+            measurementId: "G-B3JK4M6STY"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+        const provider = new GoogleAuthProvider();
+        
+        // Configure Google provider
+        provider.addScope('profile');
+        provider.addScope('email');
+        provider.setCustomParameters({
+            prompt: 'select_account'
+        });
+
+        // Make Firebase services available globally
+        window.firebase = {
+            app,
+            db,
+            auth,
+            provider,
+            collection,
+            addDoc,
+            getDocs,
+            deleteDoc,
+            doc,
+            orderBy,
+            query,
+            onSnapshot,
+            serverTimestamp,
+            signInWithPopup,
+            signOut,
+            onAuthStateChanged,
+            GoogleAuthProvider,
+            createUserWithEmailAndPassword,
+            signInWithEmailAndPassword
+        };
+
+        // Firebase Service Class
+        class FirebaseService {
+            constructor() {
+                this.tracksCollection = collection(db, 'tracks');
+                this.currentUser = null;
+                this.setupAuth();
+            }
+
+            setupAuth() {
+                onAuthStateChanged(auth, (user) => {
+                    this.currentUser = user;
+                    const authSection = document.getElementById('authSection');
+                    const mainApp = document.getElementById('mainApp');
+                    const userInfo = document.getElementById('userInfo');
+                    
+                    if (user) {
+                        console.log('Usuario autenticado:', user.displayName);
+                        if (authSection) authSection.style.display = 'none';
+                        if (mainApp) mainApp.style.display = 'block';
+                        if (userInfo) userInfo.textContent = user.displayName || user.email;
+                        window.musicApp?.loadTracks();
+                    } else {
+                        console.log('Usuario no autenticado');
+                        if (authSection) authSection.style.display = 'flex';
+                        if (mainApp) mainApp.style.display = 'none';
+                    }
+                });
+            }
+
+            async signInWithGoogle() {
+                try {
+                    console.log('Intentando iniciar sesión...');
+                    const result = await signInWithPopup(auth, provider);
+                    console.log('Inicio de sesión exitoso:', result.user);
+                    return result.user;
+                } catch (error) {
+                    console.error('Error en autenticación:', error);
+                    alert('Error al iniciar sesión: ' + error.message);
+                    throw error;
+                }
+            }
+
+            async signInWithEmail(email, password) {
+                try {
+                    const result = await signInWithEmailAndPassword(auth, email, password);
+                    console.log('Inicio de sesión exitoso:', result.user);
+                    return result.user;
+                } catch (error) {
+                    console.error('Error en autenticación:', error);
+                    throw error;
+                }
+            }
+
+            async signUpWithEmail(email, password) {
+                try {
+                    const result = await createUserWithEmailAndPassword(auth, email, password);
+                    console.log('Registro exitoso:', result.user);
+                    return result.user;
+                } catch (error) {
+                    console.error('Error en registro:', error);
+                    throw error;
+                }
+            }
+
+            async signOut() {
+                try {
+                    await signOut(auth);
+                } catch (error) {
+                    console.error('Error al cerrar sesión:', error);
+                    throw error;
+                }
+            }
+
+            async addTrack(trackData) {
+                if (!this.currentUser) throw new Error('Usuario no autenticado');
+                
+                try {
+                    const docRef = await addDoc(this.tracksCollection, {
+                        ...trackData,
+                        userId: this.currentUser.uid,
+                        playlist: trackData.playlist || 'default',
+                        createdAt: serverTimestamp(),
+                        updatedAt: serverTimestamp()
+                    });
+                    console.log('Track added with ID:', docRef.id);
+                    return docRef.id;
+                } catch (error) {
+                    console.error('Error adding track:', error);
+                    throw error;
+                }
+            }
+
+            async createPlaylist(name) {
+                if (!this.currentUser) throw new Error('Usuario no autenticado');
+                
+                try {
+                    const playlistsCollection = collection(db, 'playlists');
+                    const docRef = await addDoc(playlistsCollection, {
+                        name: name,
+                        userId: this.currentUser.uid,
+                        createdAt: serverTimestamp()
+                    });
+                    console.log('Playlist created with ID:', docRef.id);
+                    return docRef.id;
+                } catch (error) {
+                    console.error('Error creating playlist:', error);
+                    throw error;
+                }
+            }
+
+            async getPlaylists() {
+                if (!this.currentUser) return [];
+                
+                try {
+                    const playlistsCollection = collection(db, 'playlists');
+                    const q = query(playlistsCollection, orderBy('createdAt', 'desc'));
+                    const snapshot = await getDocs(q);
+                    
+                    const playlists = [];
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        if (data.userId === this.currentUser.uid) {
+                            playlists.push({
+                                id: doc.id,
+                                ...data
+                            });
+                        }
+                    });
+                    
+                    return [{ id: 'default', name: 'Todas las canciones' }, ...playlists];
+                } catch (error) {
+                    console.error('Error getting playlists:', error);
+                    throw error;
+                }
+            }
+
+            async getAllTracks() {
+                if (!this.currentUser) return [];
+                
+                try {
+                    const q = query(this.tracksCollection, orderBy('createdAt', 'desc'));
+                    const snapshot = await getDocs(q);
+                    
+                    const tracks = [];
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        if (data.userId === this.currentUser.uid) {
+                            tracks.push({
+                                id: doc.id,
+                                ...data
+                            });
+                        }
+                    });
+                    
+                    console.log('Retrieved tracks:', tracks.length);
+                    return tracks;
+                } catch (error) {
+                    console.error('Error getting tracks:', error);
+                    throw error;
+                }
+            }
+
+            async deleteTrack(trackId) {
+                if (!this.currentUser) throw new Error('Usuario no autenticado');
+                
+                try {
+                    await deleteDoc(doc(db, 'tracks', trackId));
+                    console.log('Track deleted:', trackId);
+                } catch (error) {
+                    console.error('Error deleting track:', error);
+                    throw error;
+                }
+            }
+
+            onTracksChange(callback) {
+                if (!this.currentUser) return () => {};
+                
+                const q = query(this.tracksCollection, orderBy('createdAt', 'desc'));
+                return onSnapshot(q, (snapshot) => {
+                    const tracks = [];
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        if (data.userId === this.currentUser.uid) {
+                            tracks.push({
+                                id: doc.id,
+                                ...data
+                            });
+                        }
+                    });
+                    callback(tracks);
+                }, (error) => {
+                    console.error('Error listening to tracks:', error);
+                });
+            }
+        }
+
+        // Enhanced Cloudinary Uploader Class with Mobile Debugging
+        class CloudinaryUploader {
+            constructor() {
+                this.cloudName = 'dgy5bftjt';
+                this.uploadPreset = 'mp3_unsigned';
+                this.apiUrl = `https://api.cloudinary.com/v1_1/${this.cloudName}/auto/upload`;
+                this.debugLog = [];
+                this.initializeMobileDebugger();
+            }
+
+            initializeMobileDebugger() {
+                // Silent debugging - no UI
+                this.mobileLog('info', 'Device Info', {
+                    userAgent: navigator.userAgent,
+                    viewport: `${window.innerWidth}x${window.innerHeight}`,
+                    memory: navigator.deviceMemory || 'unknown',
+                    connection: navigator.connection?.effectiveType || 'unknown',
+                    online: navigator.onLine
+                });
+
+                // Monitor network changes
+                window.addEventListener('online', () => this.mobileLog('success', 'Network', 'Connection restored'));
+                window.addEventListener('offline', () => this.mobileLog('error', 'Network', 'Connection lost'));
+            }
+
+            createDebugUI() {
+                // No debug UI - keep debugging silent
+            }
+
+            mobileLog(level, category, data) {
+                const timestamp = new Date().toISOString().split('T')[1].substring(0, 8);
+                const entry = {
+                    timestamp,
+                    level,
+                    category,
+                    data: typeof data === 'object' ? JSON.stringify(data, null, 2) : data
+                };
+
+                this.debugLog.push(entry);
+                
+                // Keep only last 100 entries
+                if (this.debugLog.length > 100) {
+                    this.debugLog = this.debugLog.slice(-100);
+                }
+
+                this.renderDebugLog();
+
+                // Also log to console with prefix
+                const message = `[${category}] ${entry.data}`;
+                switch (level) {
+                    case 'error': console.error(message); break;
+                    case 'warning': console.warn(message); break;
+                    case 'success': console.log(`✅ ${message}`); break;
+                    default: console.log(message);
+                }
+            }
+
+            renderDebugLog() {
+                const logContainer = document.getElementById('mobileDebugLog');
+                if (!logContainer) return;
+
+                logContainer.innerHTML = this.debugLog.map(entry => `
+                    <div class="debug-entry debug-${entry.level}">
+                        <strong>${entry.timestamp}</strong> [${entry.category}]<br>
+                        <span style="white-space: pre-wrap;">${entry.data}</span>
+                    </div>
+                `).join('');
+
+                logContainer.scrollTop = logContainer.scrollHeight;
+            }
+
+            async uploadFile(file, onProgress = null) {
+                const uploadId = Date.now();
+                this.mobileLog('info', 'Upload Start', `File: ${file.name}, Size: ${(file.size/1024/1024).toFixed(2)}MB`);
+
+                return new Promise((resolve, reject) => {
+                    // Enhanced validation with mobile logging
+                    if (!this.isValidAudioFile(file)) {
+                        const error = `Invalid file type: ${file.type}`;
+                        this.mobileLog('error', 'Validation', error);
+                        reject(new Error(error));
+                        return;
+                    }
+
+                    const maxSize = 50 * 1024 * 1024;
+                    if (file.size > maxSize) {
+                        const error = `File too large: ${(file.size/1024/1024).toFixed(2)}MB (max 50MB)`;
+                        this.mobileLog('error', 'Validation', error);
+                        reject(new Error(error));
+                        return;
+                    }
+
+                    // Network check
+                    if (!navigator.onLine) {
+                        const error = 'No internet connection';
+                        this.mobileLog('error', 'Network', error);
+                        reject(new Error(error));
+                        return;
+                    }
+
+                    this.mobileLog('info', 'Upload Config', {
+                        cloudName: this.cloudName,
+                        uploadPreset: this.uploadPreset,
+                        apiUrl: this.apiUrl
+                    });
+
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    formData.append('upload_preset', this.uploadPreset);
+                    formData.append('resource_type', 'video');
+
+                    const xhr = new XMLHttpRequest();
+
+                    // Enhanced progress tracking
+                    if (onProgress) {
+                        xhr.upload.addEventListener('progress', (e) => {
+                            if (e.lengthComputable) {
+                                const percent = (e.loaded / e.total) * 100;
+                                this.mobileLog('info', 'Upload Progress', `${percent.toFixed(1)}% (${(e.loaded/1024/1024).toFixed(2)}/${(e.total/1024/1024).toFixed(2)} MB)`);
+                                onProgress(percent);
+                            }
+                        });
+                    }
+
+                    // Success handler with detailed logging
+                    xhr.addEventListener('load', () => {
+                        this.mobileLog('info', 'Server Response', `Status: ${xhr.status}, Response length: ${xhr.responseText?.length || 0}`);
+                        
+                        if (xhr.status === 200) {
+                            try {
+                                const result = JSON.parse(xhr.responseText);
+                                this.mobileLog('success', 'Upload Complete', {
+                                    publicId: result.public_id,
+                                    format: result.format,
+                                    bytes: result.bytes,
+                                    url: result.secure_url
+                                });
+                                resolve(result);
+                            } catch (error) {
+                                this.mobileLog('error', 'Response Parse', `JSON parse error: ${error.message}`);
+                                reject(new Error('Failed to parse server response'));
+                            }
+                        } else {
+                            this.mobileLog('error', 'Server Error', `HTTP ${xhr.status}: ${xhr.responseText?.substring(0, 200)}`);
+                            reject(new Error(`Upload failed: ${xhr.status} ${xhr.statusText}`));
+                        }
+                    });
+
+                    // Error handlers with detailed logging
+                    xhr.addEventListener('error', () => {
+                        this.mobileLog('error', 'Network Error', 'XHR network error occurred');
+                        reject(new Error('Network error during upload'));
+                    });
+
+                    xhr.addEventListener('timeout', () => {
+                        this.mobileLog('error', 'Timeout', `Upload timed out after ${xhr.timeout}ms`);
+                        reject(new Error('Upload timed out'));
+                    });
+
+                    xhr.addEventListener('abort', () => {
+                        this.mobileLog('warning', 'Upload Abort', 'Upload was cancelled');
+                        reject(new Error('Upload was cancelled'));
+                    });
+
+                    // Configure request
+                    xhr.timeout = 5 * 60 * 1000; // 5 minutes
+                    xhr.open('POST', this.apiUrl);
+                    
+                    this.mobileLog('info', 'Request Send', 'Sending upload request to Cloudinary');
+                    xhr.send(formData);
+                });
+            }
+
+            async uploadMultipleFiles(files, onProgress = null, onFileComplete = null) {
+                const results = [];
+                const totalFiles = files.length;
+                let completedFiles = 0;
+
+                this.mobileLog('info', 'Batch Upload', `Starting upload of ${totalFiles} files`);
+
+                for (let i = 0; i < files.length; i++) {
+                    const file = files[i];
+                    
+                    try {
+                        const result = await this.uploadFile(file, (fileProgress) => {
+                            if (onProgress) {
+                                const overallProgress = ((completedFiles / totalFiles) + (fileProgress / 100 / totalFiles)) * 100;
+                                onProgress(overallProgress, `Uploading ${file.name}...`);
+                            }
+                        });
+
+                        results.push({
+                            success: true,
+                            file: file,
+                            result: result
+                        });
+
+                        completedFiles++;
+                        
+                        if (onFileComplete) {
+                            onFileComplete(file, result, null);
+                        }
+
+                        if (onProgress) {
+                            onProgress((completedFiles / totalFiles) * 100, `${completedFiles}/${totalFiles} files completed`);
+                        }
+
+                    } catch (error) {
+                        this.mobileLog('error', 'File Upload Failed', `${file.name}: ${error.message}`);
+                        
+                        results.push({
+                            success: false,
+                            file: file,
+                            error: error.message
+                        });
+
+                        if (onFileComplete) {
+                            onFileComplete(file, null, error);
+                        }
+                    }
+                }
+
+                this.mobileLog('success', 'Batch Complete', `${results.filter(r => r.success).length}/${totalFiles} files uploaded successfully`);
+                return results;
+            }
+
+            isValidAudioFile(file) {
+                const validTypes = [
+                    'audio/mpeg',
+                    'audio/mp3',
+                    'audio/mp4',
+                    'audio/x-m4a',
+                    'audio/aac'
+                ];
+
+                const validExtensions = ['.mp3', '.m4a', '.aac'];
+                const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
+
+                const isValid = validTypes.includes(file.type) || validExtensions.includes(fileExtension);
+                
+                this.mobileLog('info', 'File Validation', {
+                    fileName: file.name,
+                    fileType: file.type,
+                    extension: fileExtension,
+                    isValid: isValid
+                });
+
+                return isValid;
+            }
+
+            extractMetadata(filename) {
+                const nameWithoutExt = filename.replace(/\.[^/.]+$/, "");
+                const parts = nameWithoutExt.split(' - ');
+                
+                if (parts.length >= 2) {
+                    return {
+                        artist: parts[0].trim(),
+                        title: parts.slice(1).join(' - ').trim()
+                    };
+                }
+                
+                return {
+                    artist: 'Artista Desconocido',
+                    title: nameWithoutExt.trim()
+                };
+            }
+        }
+
+        // Initialize services when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            window.firebaseService = new FirebaseService();
+            window.cloudinaryUploader = new CloudinaryUploader();
+        });
+    </script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #121212;
+            color: #e0e0e0;
+            overscroll-behavior: none;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+            padding-bottom: 80px;
+        }
+        
+        .progress-container {
+            height: 5px;
+            background-color: #333;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background-color: #1DB954;
+            border-radius: 5px;
+            transition: width 0.3s ease;
+        }
+        
+        .track-item {
+            background: linear-gradient(135deg, #1e1e1e 0%, #2a2a2a 100%);
+            border: 1px solid #333;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 15px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            cursor: pointer;
+        }
+        
+        .track-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+        
+        .play-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #1DB954 0%, #1aa34a 100%);
+            border: none;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(29, 185, 84, 0.3);
+        }
+        
+        .play-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(29, 185, 84, 0.4);
+        }
+        
+        .control-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .control-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-1px);
+        }
+        
+        .upload-container {
+            background: linear-gradient(135deg, #1e1e1e 0%, #2a2a2a 100%);
+            border: 2px dashed #444;
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+            transition: all 0.3s ease;
+            margin-bottom: 30px;
+        }
+        
+        .upload-container:hover {
+            border-color: #1DB954;
+            background: linear-gradient(135deg, #1e1e1e 0%, #2a2a2a 100%);
+        }
+        
+        .upload-container.drag-over {
+            border-color: #1DB954;
+            background: rgba(29, 185, 84, 0.1);
+        }
+        
+        .upload-btn {
+            background: linear-gradient(135deg, #1DB954 0%, #1aa34a 100%);
+            border: none;
+            color: white;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(29, 185, 84, 0.3);
+        }
+        
+        .upload-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(29, 185, 84, 0.4);
+        }
+        
+        .auth-container {
+            background: linear-gradient(135deg, #1e1e1e 0%, #2a2a2a 100%);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+        
+        .auth-btn {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 15px;
+        }
+        
+        .google-btn {
+            background: #4285f4;
+            color: white;
+        }
+        
+        .google-btn:hover {
+            background: #357ae8;
+            transform: translateY(-2px);
+        }
+        
+        .email-btn {
+            background: linear-gradient(135deg, #1DB954 0%, #1aa34a 100%);
+            color: white;
+        }
+        
+        .email-btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .create-btn {
+            background: transparent;
+            color: #1DB954;
+            border: 2px solid #1DB954;
+        }
+        
+        .create-btn:hover {
+            background: #1DB954;
+            color: white;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 15px;
+            border: 1px solid #444;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            color: white;
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: #1DB954;
+            box-shadow: 0 0 0 2px rgba(29, 185, 84, 0.2);
+        }
+        
+        .audio-player {
+            background: #333;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+        
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .loading-content {
+            background: #2a2a2a;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            min-width: 300px;
+        }
+        
+        .spinner {
+            border: 3px solid #333;
+            border-top: 3px solid #1DB954;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #2a2a2a;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            border-left: 4px solid #1DB954;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            z-index: 1001;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+        }
+        
+        .notification.show {
+            transform: translateX(0);
+        }
+        
+        .notification.error {
+            border-left-color: #e74c3c;
+        }
+        
+        .notification.success {
+            border-left-color: #2ecc71;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="loading-content">
+            <div class="spinner"></div>
+            <h3 id="loadingTitle">Cargando...</h3>
+            <p id="loadingMessage">Por favor espera...</p>
+        </div>
+    </div>
+
+    <!-- Auth Section -->
+    <div id="authSection" class="min-h-screen bg-black flex flex-col items-center justify-center px-6 py-8">
+        <!-- Logo and Title -->
+        <div class="text-center mb-12">
+            <!-- Music Icon -->
+            <div class="mb-6">
+                <svg width="80" height="80" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="mx-auto">
+                    <path d="M12 3V13.55C11.41 13.21 10.73 13 10 13C7.79 13 6 14.79 6 17S7.79 21 10 21 14 19.21 14 17V7H18V3H12Z" fill="#1DB954"/>
+                </svg>
+            </div>
+            <h1 class="text-4xl font-bold text-white mb-3">Full Musix</h1>
+            <p class="text-gray-400 text-lg">Tu reproductor de música personal en la nube</p>
+        </div>
+
+        <!-- Initial Buttons -->
+        <div id="initialButtons" class="w-full max-w-sm mb-8">
+            <div class="flex space-x-4 mb-8">
+                <button id="showLoginBtn" class="flex-1 bg-gray-700 hover:bg-gray-600 text-white font-medium py-3 px-6 rounded-lg transition-colors">
+                    Iniciar Sesión
+                </button>
+                <button id="showRegisterBtn" class="flex-1 bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-6 rounded-lg transition-colors">
+                    Registrarse
+                </button>
+            </div>
+        </div>
+
+        <!-- Login Form -->
+        <div id="loginForm" class="w-full max-w-sm" style="display: none;">
+            <form id="emailSignInForm" class="space-y-4 mb-6">
+                <div>
+                    <input type="email" id="emailInput" class="w-full bg-gray-800 border border-gray-600 text-white rounded-lg px-4 py-4 focus:outline-none focus:border-green-500 text-lg" placeholder="tu@email.com" required>
+                </div>
+                <div class="relative">
+                    <input type="password" id="passwordInput" class="w-full bg-gray-800 border border-gray-600 text-white rounded-lg px-4 py-4 pr-12 focus:outline-none focus:border-green-500 text-lg" placeholder="••••••••" required>
+                    <button type="button" id="togglePassword" class="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-300">
+                        <i class="fas fa-eye" id="eyeIcon"></i>
+                    </button>
+                </div>
+                <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-4 px-4 rounded-lg transition-colors text-lg flex items-center justify-center">
+                    <i class="fas fa-envelope mr-3"></i>
+                    Registrarse
+                </button>
+            </form>
+        </div>
+
+        <!-- Register Form -->
+        <div id="registerForm" class="w-full max-w-sm" style="display: none;">
+            <form id="emailSignUpForm" class="space-y-4 mb-6">
+                <div>
+                    <input type="email" id="registerEmailInput" class="w-full bg-gray-800 border border-gray-600 text-white rounded-lg px-4 py-4 focus:outline-none focus:border-green-500 text-lg" placeholder="tu@email.com" required>
+                </div>
+                <div class="relative">
+                    <input type="password" id="registerPasswordInput" class="w-full bg-gray-800 border border-gray-600 text-white rounded-lg px-4 py-4 pr-12 focus:outline-none focus:border-green-500 text-lg" placeholder="••••••••" required>
+                    <button type="button" id="toggleRegisterPassword" class="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-300">
+                        <i class="fas fa-eye" id="registerEyeIcon"></i>
+                    </button>
+                </div>
+                <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-4 px-4 rounded-lg transition-colors text-lg flex items-center justify-center">
+                    <i class="fas fa-envelope mr-3"></i>
+                    Registrarse
+                </button>
+            </form>
+        </div>
+
+        <!-- Divider -->
+        <div class="w-full max-w-sm mb-8">
+            <div class="relative">
+                <div class="absolute inset-0 flex items-center">
+                    <div class="w-full border-t border-gray-600"></div>
+                </div>
+                <div class="relative flex justify-center text-sm">
+                    <span class="px-4 bg-black text-gray-400">O</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Google Sign In -->
+        <div class="w-full max-w-sm mb-8">
+            <button id="googleSignInBtn" class="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-4 px-4 rounded-lg transition-colors text-lg flex items-center justify-center">
+                <i class="fab fa-google mr-3"></i>
+                Continuar con Google
+            </button>
+        </div>
+
+        <!-- Footer Text -->
+        <div class="text-center">
+            <p class="text-gray-500 text-sm">
+                Necesitas una cuenta para subir y guardar tus canciones
+            </p>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="mainApp" style="display: none;">
+        <!-- Header -->
+        <header class="bg-gray-900 p-4">
+            <div class="max-w-6xl mx-auto flex justify-between items-center">
+                <h1 class="text-2xl font-bold bg-gradient-to-r from-green-400 to-blue-500 bg-clip-text text-transparent">
+                    𝐅𝐮𝐥𝐥 𝐌ยรเא
+                </h1>
+                <div class="flex items-center space-x-4">
+                    <span id="userInfo" class="text-gray-300"></span>
+                    <button id="signOutBtn" class="control-btn">
+                        <i class="fas fa-sign-out-alt mr-2"></i>Salir
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="max-w-6xl mx-auto p-4">
+            <!-- Upload Section -->
+            <section class="upload-container" id="uploadContainer">
+                <div class="mb-6">
+                    <i class="fas fa-cloud-upload-alt text-6xl text-gray-500 mb-4"></i>
+                    <h3 class="text-xl font-semibold mb-2">Sube tu música</h3>
+                    <p class="text-gray-400 mb-6">Arrastra archivos aquí o haz clic para seleccionar</p>
+                    
+                    <input type="file" id="fileInput" multiple accept=".mp3,.m4a" style="display: none;">
+                    <button id="selectFilesBtn" class="upload-btn">
+                        <i class="fas fa-folder-open mr-2"></i>
+                        Seleccionar Archivos
+                    </button>
+                </div>
+                
+                <div id="selectedFiles" style="display: none;">
+                    <h4 class="text-lg font-semibold mb-4">Archivos seleccionados:</h4>
+                    <div id="filesList" class="mb-4"></div>
+                    <button id="uploadBtn" class="upload-btn">
+                        <i class="fas fa-upload mr-2"></i>
+                        Subir Archivos
+                    </button>
+                </div>
+            </section>
+
+            <!-- Playlists and Tracks Section -->
+            <section id="tracksSection">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold">Mi Biblioteca</h2>
+                    <div class="flex gap-2">
+                        <button id="createPlaylistBtn" class="control-btn">
+                            <i class="fas fa-plus mr-2"></i>Nueva Lista
+                        </button>
+                        <button id="refreshBtn" class="control-btn">
+                            <i class="fas fa-sync-alt mr-2"></i>Actualizar
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Playlist Selector -->
+                <div class="mb-6">
+                    <div class="flex flex-wrap gap-2" id="playlistTabs">
+                        <!-- Playlist tabs will be inserted here -->
+                    </div>
+                </div>
+                
+                <div id="tracksList">
+                    <div class="text-center py-12">
+                        <i class="fas fa-music text-6xl text-gray-600 mb-4"></i>
+                        <p class="text-gray-400">No hay música todavía. ¡Sube algunos archivos!</p>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        let currentAudio = null;
+        let musicApp = null;
+
+        // Music App Class
+        class MusicApp {
+            constructor() {
+                this.tracks = [];
+                this.selectedFiles = [];
+                this.playlists = [];
+                this.currentPlaylist = 'default';
+                this.currentTrackIndex = 0;
+                this.isPlaying = false;
+                this.setupEventListeners();
+                this.setupDragAndDrop();
+            }
+
+            setupEventListeners() {
+                // Auth form toggle events
+                document.getElementById('showLoginBtn').addEventListener('click', () => this.showLoginForm());
+                document.getElementById('showRegisterBtn').addEventListener('click', () => this.showRegisterForm());
+
+                // Auth events
+                document.getElementById('googleSignInBtn').addEventListener('click', () => this.signInWithGoogle());
+                document.getElementById('emailSignInForm').addEventListener('submit', (e) => this.signInWithEmail(e));
+                document.getElementById('emailSignUpForm').addEventListener('submit', (e) => this.signUpWithEmail(e));
+                document.getElementById('signOutBtn').addEventListener('click', () => this.signOut());
+
+                // Password toggle
+                document.getElementById('togglePassword').addEventListener('click', () => this.togglePassword());
+                document.getElementById('toggleRegisterPassword').addEventListener('click', () => this.toggleRegisterPassword());
+
+                // File upload events
+                document.getElementById('selectFilesBtn').addEventListener('click', () => {
+                    document.getElementById('fileInput').click();
+                });
+                document.getElementById('fileInput').addEventListener('change', (e) => this.handleFileSelect(e));
+                document.getElementById('uploadBtn').addEventListener('click', () => this.uploadFiles());
+                document.getElementById('refreshBtn').addEventListener('click', () => this.loadTracks());
+
+                // Playlist events
+                document.getElementById('createPlaylistBtn').addEventListener('click', () => this.createNewPlaylist());
+            }
+
+            showLoginForm() {
+                document.getElementById('initialButtons').style.display = 'none';
+                document.getElementById('loginForm').style.display = 'block';
+                document.getElementById('registerForm').style.display = 'none';
+            }
+
+            showRegisterForm() {
+                document.getElementById('initialButtons').style.display = 'none';
+                document.getElementById('loginForm').style.display = 'none';
+                document.getElementById('registerForm').style.display = 'block';
+            }
+
+            togglePassword() {
+                const passwordInput = document.getElementById('passwordInput');
+                const eyeIcon = document.getElementById('eyeIcon');
+                
+                if (passwordInput.type === 'password') {
+                    passwordInput.type = 'text';
+                    eyeIcon.className = 'fas fa-eye-slash';
+                } else {
+                    passwordInput.type = 'password';
+                    eyeIcon.className = 'fas fa-eye';
+                }
+            }
+
+            toggleRegisterPassword() {
+                const passwordInput = document.getElementById('registerPasswordInput');
+                const eyeIcon = document.getElementById('registerEyeIcon');
+                
+                if (passwordInput.type === 'password') {
+                    passwordInput.type = 'text';
+                    eyeIcon.className = 'fas fa-eye-slash';
+                } else {
+                    passwordInput.type = 'password';
+                    eyeIcon.className = 'fas fa-eye';
+                }
+            }
+
+            setupDragAndDrop() {
+                const uploadContainer = document.getElementById('uploadContainer');
+                
+                ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                    uploadContainer.addEventListener(eventName, (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                    });
+                });
+
+                ['dragenter', 'dragover'].forEach(eventName => {
+                    uploadContainer.addEventListener(eventName, () => {
+                        uploadContainer.classList.add('drag-over');
+                    });
+                });
+
+                ['dragleave', 'drop'].forEach(eventName => {
+                    uploadContainer.addEventListener(eventName, () => {
+                        uploadContainer.classList.remove('drag-over');
+                    });
+                });
+
+                uploadContainer.addEventListener('drop', (e) => {
+                    const files = Array.from(e.dataTransfer.files);
+                    this.handleFiles(files);
+                });
+            }
+
+            async signInWithGoogle() {
+                try {
+                    await window.firebaseService.signInWithGoogle();
+                } catch (error) {
+                    this.showNotification('Error al iniciar sesión con Google', 'error');
+                }
+            }
+
+            async signInWithEmail(e) {
+                e.preventDefault();
+                const email = document.getElementById('emailInput').value;
+                const password = document.getElementById('passwordInput').value;
+                
+                try {
+                    await window.firebaseService.signInWithEmail(email, password);
+                } catch (error) {
+                    this.showNotification('Error al iniciar sesión: ' + error.message, 'error');
+                }
+            }
+
+            async signUpWithEmail(e) {
+                e.preventDefault();
+                const email = document.getElementById('registerEmailInput').value;
+                const password = document.getElementById('registerPasswordInput').value;
+                
+                if (!email || !password) {
+                    this.showNotification('Por favor completa todos los campos', 'error');
+                    return;
+                }
+                
+                try {
+                    await window.firebaseService.signUpWithEmail(email, password);
+                    this.showNotification('Cuenta creada exitosamente', 'success');
+                } catch (error) {
+                    this.showNotification('Error al crear cuenta: ' + error.message, 'error');
+                }
+            }
+
+            async signOut() {
+                try {
+                    await window.firebaseService.signOut();
+                } catch (error) {
+                    this.showNotification('Error al cerrar sesión', 'error');
+                }
+            }
+
+            handleFileSelect(e) {
+                const files = Array.from(e.target.files);
+                this.handleFiles(files);
+            }
+
+            handleFiles(files) {
+                const audioFiles = files.filter(file => 
+                    file.type.startsWith('audio/') || 
+                    file.name.toLowerCase().endsWith('.mp3') || 
+                    file.name.toLowerCase().endsWith('.m4a')
+                );
+                
+                if (audioFiles.length === 0) {
+                    this.showNotification('Por favor selecciona archivos de audio válidos', 'error');
+                    return;
+                }
+                
+                this.selectedFiles = audioFiles;
+                this.displaySelectedFiles();
+            }
+
+            displaySelectedFiles() {
+                const selectedFilesDiv = document.getElementById('selectedFiles');
+                const filesList = document.getElementById('filesList');
+                
+                if (this.selectedFiles.length === 0) {
+                    selectedFilesDiv.style.display = 'none';
+                    return;
+                }
+                
+                selectedFilesDiv.style.display = 'block';
+                
+                filesList.innerHTML = this.selectedFiles.map(file => `
+                    <div class="flex justify-between items-center p-3 bg-gray-800 rounded-lg mb-2">
+                        <div>
+                            <p class="font-medium">${file.name}</p>
+                            <p class="text-sm text-gray-400">${(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                        </div>
+                        <i class="fas fa-music text-green-400"></i>
+                    </div>
+                `).join('');
+            }
+
+            async uploadFiles() {
+                if (this.selectedFiles.length === 0) {
+                    this.showNotification('No hay archivos seleccionados', 'error');
+                    return;
+                }
+
+                this.showLoading('Subiendo archivos...', 'Preparando subida...');
+
+                try {
+                    let successCount = 0;
+                    let errorCount = 0;
+
+                    const results = await window.cloudinaryUploader.uploadMultipleFiles(
+                        this.selectedFiles,
+                        (progress, message) => {
+                            this.updateLoading('Subiendo archivos...', message);
+                        },
+                        async (file, result, error) => {
+                            if (result) {
+                                try {
+                                    const metadata = window.cloudinaryUploader.extractMetadata(file.name);
+                                    const trackData = {
+                                        title: metadata.title,
+                                        artist: metadata.artist,
+                                        filename: file.name,
+                                        cloudinaryId: result.public_id,
+                                        audioUrl: result.secure_url,
+                                        format: result.format,
+                                        duration: result.duration,
+                                        size: result.bytes
+                                    };
+                                    
+                                    await window.firebaseService.addTrack(trackData);
+                                    successCount++;
+                                } catch (dbError) {
+                                    console.error('Error saving to database:', dbError);
+                                    errorCount++;
+                                }
+                            } else {
+                                errorCount++;
+                            }
+                        }
+                    );
+
+                    this.hideLoading();
+
+                    if (successCount > 0) {
+                        this.showNotification(`${successCount} archivo(s) subido(s) exitosamente`, 'success');
+                        this.loadTracks();
+                    }
+
+                    if (errorCount > 0) {
+                        this.showNotification(`${errorCount} archivo(s) fallaron al subir`, 'error');
+                    }
+
+                    // Clear selection
+                    this.selectedFiles = [];
+                    document.getElementById('fileInput').value = '';
+                    this.displaySelectedFiles();
+
+                } catch (error) {
+                    this.hideLoading();
+                    this.showNotification('Error durante la subida: ' + error.message, 'error');
+                }
+            }
+
+            async loadTracks() {
+                try {
+                    const tracks = await window.firebaseService.getAllTracks();
+                    this.tracks = tracks;
+                    this.playlists = await window.firebaseService.getPlaylists();
+                    this.renderPlaylists();
+                    this.renderTracks();
+                } catch (error) {
+                    console.error('Error loading tracks:', error);
+                    this.showNotification('Error al cargar las canciones', 'error');
+                }
+            }
+
+            async createNewPlaylist() {
+                const name = prompt('Nombre de la nueva lista de reproducción:');
+                if (name && name.trim()) {
+                    try {
+                        await window.firebaseService.createPlaylist(name.trim());
+                        this.showNotification('Lista de reproducción creada', 'success');
+                        this.loadTracks();
+                    } catch (error) {
+                        this.showNotification('Error al crear la lista', 'error');
+                    }
+                }
+            }
+
+            renderPlaylists() {
+                const playlistTabs = document.getElementById('playlistTabs');
+                
+                playlistTabs.innerHTML = this.playlists.map(playlist => `
+                    <button class="px-4 py-2 rounded-lg border ${playlist.id === this.currentPlaylist ? 'bg-green-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'}" 
+                            onclick="musicApp.switchPlaylist('${playlist.id}')">
+                        <i class="fas fa-${playlist.id === 'default' ? 'music' : 'list'} mr-2"></i>
+                        ${playlist.name}
+                    </button>
+                `).join('');
+            }
+
+            switchPlaylist(playlistId) {
+                this.currentPlaylist = playlistId;
+                this.renderPlaylists();
+                this.renderTracks();
+            }
+
+            renderTracks() {
+                const tracksList = document.getElementById('tracksList');
+                
+                // Filter tracks by current playlist
+                const filteredTracks = this.currentPlaylist === 'default' 
+                    ? this.tracks 
+                    : this.tracks.filter(track => track.playlist === this.currentPlaylist);
+                
+                if (filteredTracks.length === 0) {
+                    tracksList.innerHTML = `
+                        <div class="text-center py-12">
+                            <i class="fas fa-music text-6xl text-gray-600 mb-4"></i>
+                            <p class="text-gray-400">No hay música en esta lista todavía.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                tracksList.innerHTML = filteredTracks.map((track, index) => `
+                    <div class="playlist-item bg-gray-800 rounded-lg p-4 mb-3 flex items-center justify-between">
+                        <div class="flex items-center space-x-4">
+                            <button class="play-btn bg-green-500 hover:bg-green-600 text-white w-12 h-12 rounded-full flex items-center justify-center" 
+                                    onclick="musicApp.playTrack(${index}, '${track.audioUrl}')">
+                                <i class="fas fa-play"></i>
+                            </button>
+                            <div class="flex-1">
+                                <h3 class="text-white font-medium">${track.title || 'Sin título'}</h3>
+                                <p class="text-gray-400 text-sm">${track.artist || 'Artista desconocido'}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <select class="bg-gray-700 text-white text-sm rounded px-2 py-1" 
+                                    onchange="musicApp.moveToPlaylist('${track.id}', this.value)">
+                                <option value="">Mover a...</option>
+                                ${this.playlists.filter(p => p.id !== 'default').map(p => 
+                                    `<option value="${p.id}">${p.name}</option>`
+                                ).join('')}
+                            </select>
+                            <button class="text-gray-400 hover:text-red-400" 
+                                    onclick="musicApp.deleteTrack('${track.id}')">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+
+                // Add music player at bottom if we have tracks
+                if (filteredTracks.length > 0) {
+                    tracksList.innerHTML += this.renderMusicPlayer();
+                }
+            }
+
+            renderMusicPlayer() {
+                return `
+                    <div class="fixed bottom-0 left-0 right-0 bg-gray-900 border-t border-gray-700 p-4" id="musicPlayer" style="display: none;">
+                        <div class="max-w-6xl mx-auto">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-4">
+                                    <img id="playerArtwork" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='50' height='50' viewBox='0 0 24 24' fill='%23666'%3E%3Cpath d='M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z'/%3E%3C/svg%3E" 
+                                         alt="Album Art" class="w-12 h-12 rounded bg-gray-700">
+                                    <div>
+                                        <h4 id="playerTitle" class="text-white font-medium">Sin título</h4>
+                                        <p id="playerArtist" class="text-gray-400 text-sm">Artista desconocido</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-center space-x-4">
+                                    <button onclick="musicApp.previousTrack()" class="text-gray-400 hover:text-white">
+                                        <i class="fas fa-step-backward"></i>
+                                    </button>
+                                    <button id="playPauseBtn" onclick="musicApp.togglePlayPause()" 
+                                            class="bg-green-500 hover:bg-green-600 text-white w-10 h-10 rounded-full flex items-center justify-center">
+                                        <i class="fas fa-play"></i>
+                                    </button>
+                                    <button onclick="musicApp.nextTrack()" class="text-gray-400 hover:text-white">
+                                        <i class="fas fa-step-forward"></i>
+                                    </button>
+                                </div>
+                                
+                                <div class="flex items-center space-x-2">
+                                    <i class="fas fa-volume-down text-gray-400"></i>
+                                    <input type="range" id="volumeSlider" min="0" max="100" value="50" 
+                                           class="w-20 volume-slider" onchange="musicApp.setVolume(this.value)">
+                                    <i class="fas fa-volume-up text-gray-400"></i>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-3">
+                                <div class="flex items-center space-x-2 text-xs text-gray-400">
+                                    <span id="currentTime">0:00</span>
+                                    <div class="flex-1 bg-gray-700 rounded-full h-1 cursor-pointer" onclick="musicApp.seekTo(event)">
+                                        <div id="progressBar" class="bg-green-500 h-1 rounded-full" style="width: 0%"></div>
+                                    </div>
+                                    <span id="totalTime">0:00</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <audio id="audioPlayer" preload="metadata"></audio>
+                    </div>
+                `;
+            }
+
+            playTrack(index, url) {
+                const filteredTracks = this.currentPlaylist === 'default' 
+                    ? this.tracks 
+                    : this.tracks.filter(track => track.playlist === this.currentPlaylist);
+                
+                this.currentTrackIndex = index;
+                const track = filteredTracks[index];
+                
+                // Get audio player
+                const audioPlayer = document.getElementById('audioPlayer');
+                const musicPlayer = document.getElementById('musicPlayer');
+                const playPauseBtn = document.getElementById('playPauseBtn');
+                
+                if (audioPlayer) {
+                    audioPlayer.src = url;
+                    audioPlayer.load();
+                    
+                    // Update player UI
+                    document.getElementById('playerTitle').textContent = track.title || 'Sin título';
+                    document.getElementById('playerArtist').textContent = track.artist || 'Artista desconocido';
+                    
+                    // Show player
+                    musicPlayer.style.display = 'block';
+                    
+                    // Play audio
+                    audioPlayer.play().catch(error => {
+                        console.error('Error playing audio:', error);
+                        this.showNotification('Error al reproducir el audio', 'error');
+                    });
+                    
+                    this.isPlaying = true;
+                    playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
+                    
+                    // Setup event listeners for audio player
+                    this.setupAudioEventListeners(audioPlayer);
+                }
+                
+                this.showNotification(`Reproduciendo: ${track.title}`, 'success');
+            }
+
+            setupAudioEventListeners(audioPlayer) {
+                audioPlayer.addEventListener('loadedmetadata', () => {
+                    document.getElementById('totalTime').textContent = this.formatTime(audioPlayer.duration);
+                });
+
+                audioPlayer.addEventListener('timeupdate', () => {
+                    const currentTime = audioPlayer.currentTime;
+                    const duration = audioPlayer.duration;
+                    
+                    if (duration) {
+                        const progress = (currentTime / duration) * 100;
+                        document.getElementById('progressBar').style.width = `${progress}%`;
+                        document.getElementById('currentTime').textContent = this.formatTime(currentTime);
+                    }
+                });
+
+                audioPlayer.addEventListener('ended', () => {
+                    this.nextTrack();
+                });
+            }
+
+            togglePlayPause() {
+                const audioPlayer = document.getElementById('audioPlayer');
+                const playPauseBtn = document.getElementById('playPauseBtn');
+                
+                if (this.isPlaying) {
+                    audioPlayer.pause();
+                    playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
+                    this.isPlaying = false;
+                } else {
+                    audioPlayer.play();
+                    playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
+                    this.isPlaying = true;
+                }
+            }
+
+            nextTrack() {
+                const filteredTracks = this.currentPlaylist === 'default' 
+                    ? this.tracks 
+                    : this.tracks.filter(track => track.playlist === this.currentPlaylist);
+                
+                if (this.currentTrackIndex < filteredTracks.length - 1) {
+                    this.playTrack(this.currentTrackIndex + 1, filteredTracks[this.currentTrackIndex + 1].audioUrl);
+                }
+            }
+
+            previousTrack() {
+                const filteredTracks = this.currentPlaylist === 'default' 
+                    ? this.tracks 
+                    : this.tracks.filter(track => track.playlist === this.currentPlaylist);
+                
+                if (this.currentTrackIndex > 0) {
+                    this.playTrack(this.currentTrackIndex - 1, filteredTracks[this.currentTrackIndex - 1].audioUrl);
+                }
+            }
+
+            setVolume(value) {
+                const audioPlayer = document.getElementById('audioPlayer');
+                if (audioPlayer) {
+                    audioPlayer.volume = value / 100;
+                }
+            }
+
+            seekTo(event) {
+                const audioPlayer = document.getElementById('audioPlayer');
+                const progressContainer = event.currentTarget;
+                const clickX = event.offsetX;
+                const width = progressContainer.offsetWidth;
+                const duration = audioPlayer.duration;
+                
+                if (duration) {
+                    const newTime = (clickX / width) * duration;
+                    audioPlayer.currentTime = newTime;
+                }
+            }
+
+            formatTime(seconds) {
+                const mins = Math.floor(seconds / 60);
+                const secs = Math.floor(seconds % 60);
+                return `${mins}:${secs.toString().padStart(2, '0')}`;
+            }
+
+            async moveToPlaylist(trackId, playlistId) {
+                if (!playlistId) return;
+                
+                try {
+                    // Update track's playlist
+                    const trackRef = doc(db, 'tracks', trackId);
+                    await updateDoc(trackRef, { playlist: playlistId });
+                    
+                    this.showNotification('Canción movida a la lista', 'success');
+                    this.loadTracks();
+                } catch (error) {
+                    this.showNotification('Error al mover la canción', 'error');
+                }
+            }
+
+            async deleteTrack(trackId) {
+                if (!confirm('¿Estás seguro de que quieres eliminar esta canción?')) {
+                    return;
+                }
+
+                try {
+                    await window.firebaseService.deleteTrack(trackId);
+                    this.showNotification('Canción eliminada', 'success');
+                    this.loadTracks();
+                } catch (error) {
+                    this.showNotification('Error al eliminar la canción', 'error');
+                }
+            }
+
+            showLoading(title, message) {
+                document.getElementById('loadingTitle').textContent = title;
+                document.getElementById('loadingMessage').textContent = message;
+                document.getElementById('loadingOverlay').style.display = 'flex';
+            }
+
+            updateLoading(title, message) {
+                document.getElementById('loadingTitle').textContent = title;
+                document.getElementById('loadingMessage').textContent = message;
+            }
+
+            hideLoading() {
+                document.getElementById('loadingOverlay').style.display = 'none';
+            }
+
+            showNotification(message, type = 'success') {
+                // Remove existing notifications
+                document.querySelectorAll('.notification').forEach(n => n.remove());
+
+                const notification = document.createElement('div');
+                notification.className = `notification ${type}`;
+                notification.innerHTML = `
+                    <div class="flex items-center">
+                        <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'} mr-3"></i>
+                        <span>${message}</span>
+                    </div>
+                `;
+
+                document.body.appendChild(notification);
+
+                // Show notification
+                setTimeout(() => notification.classList.add('show'), 100);
+
+                // Hide notification after 5 seconds
+                setTimeout(() => {
+                    notification.classList.remove('show');
+                    setTimeout(() => notification.remove(), 300);
+                }, 5000);
+            }
+        }
+
+        // Initialize app when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            musicApp = new MusicApp();
+            window.musicApp = musicApp;
+        });
+    </script>
+</body>
+</html>
