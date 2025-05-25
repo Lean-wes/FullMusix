@@ -1,0 +1,1269 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>𝐅𝐮𝐥𝐥 𝐌ยรเא</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Firebase SDK v9 (modular) -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
+        import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, orderBy, query, onSnapshot, serverTimestamp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
+        import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
+
+        // Firebase configuration  
+        const firebaseConfig = {
+            apiKey: "AIzaSyCmFq5ISq59Ql84Ntf_QiynlQtMX31zmwo",
+            authDomain: "fuck-musix.firebaseapp.com",
+            projectId: "fuck-musix",
+            storageBucket: "fuck-musix.firebasestorage.app",
+            messagingSenderId: "858119028230",
+            appId: "1:858119028230:web:63dc3168ac63221a82cd87",
+            measurementId: "G-B3JK4M6STY"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+        const provider = new GoogleAuthProvider();
+        
+        // Configure Google provider
+        provider.addScope('profile');
+        provider.addScope('email');
+        provider.setCustomParameters({
+            prompt: 'select_account'
+        });
+
+        // Make Firebase services available globally
+        window.firebase = {
+            app,
+            db,
+            auth,
+            provider,
+            collection,
+            addDoc,
+            getDocs,
+            deleteDoc,
+            doc,
+            orderBy,
+            query,
+            onSnapshot,
+            serverTimestamp,
+            signInWithPopup,
+            signOut,
+            onAuthStateChanged,
+            GoogleAuthProvider,
+            createUserWithEmailAndPassword,
+            signInWithEmailAndPassword
+        };
+
+        // Firebase Service Class
+        class FirebaseService {
+            constructor() {
+                this.tracksCollection = collection(db, 'tracks');
+                this.currentUser = null;
+                this.setupAuth();
+            }
+
+            setupAuth() {
+                onAuthStateChanged(auth, (user) => {
+                    this.currentUser = user;
+                    const authSection = document.getElementById('authSection');
+                    const mainApp = document.getElementById('mainApp');
+                    const userInfo = document.getElementById('userInfo');
+                    
+                    if (user) {
+                        console.log('Usuario autenticado:', user.displayName);
+                        if (authSection) authSection.style.display = 'none';
+                        if (mainApp) mainApp.style.display = 'block';
+                        if (userInfo) userInfo.textContent = user.displayName || user.email;
+                        window.musicApp?.loadTracks();
+                    } else {
+                        console.log('Usuario no autenticado');
+                        if (authSection) authSection.style.display = 'flex';
+                        if (mainApp) mainApp.style.display = 'none';
+                    }
+                });
+            }
+
+            async signInWithGoogle() {
+                try {
+                    console.log('Intentando iniciar sesión...');
+                    const result = await signInWithPopup(auth, provider);
+                    console.log('Inicio de sesión exitoso:', result.user);
+                    return result.user;
+                } catch (error) {
+                    console.error('Error en autenticación:', error);
+                    alert('Error al iniciar sesión: ' + error.message);
+                    throw error;
+                }
+            }
+
+            async signInWithEmail(email, password) {
+                try {
+                    const result = await signInWithEmailAndPassword(auth, email, password);
+                    console.log('Inicio de sesión exitoso:', result.user);
+                    return result.user;
+                } catch (error) {
+                    console.error('Error en autenticación:', error);
+                    throw error;
+                }
+            }
+
+            async signUpWithEmail(email, password) {
+                try {
+                    const result = await createUserWithEmailAndPassword(auth, email, password);
+                    console.log('Registro exitoso:', result.user);
+                    return result.user;
+                } catch (error) {
+                    console.error('Error en registro:', error);
+                    throw error;
+                }
+            }
+
+            async signOut() {
+                try {
+                    await signOut(auth);
+                } catch (error) {
+                    console.error('Error al cerrar sesión:', error);
+                    throw error;
+                }
+            }
+
+            async addTrack(trackData) {
+                if (!this.currentUser) throw new Error('Usuario no autenticado');
+                
+                try {
+                    const docRef = await addDoc(this.tracksCollection, {
+                        ...trackData,
+                        userId: this.currentUser.uid,
+                        createdAt: serverTimestamp(),
+                        updatedAt: serverTimestamp()
+                    });
+                    console.log('Track added with ID:', docRef.id);
+                    return docRef.id;
+                } catch (error) {
+                    console.error('Error adding track:', error);
+                    throw error;
+                }
+            }
+
+            async getAllTracks() {
+                if (!this.currentUser) return [];
+                
+                try {
+                    const q = query(this.tracksCollection, orderBy('createdAt', 'desc'));
+                    const snapshot = await getDocs(q);
+                    
+                    const tracks = [];
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        if (data.userId === this.currentUser.uid) {
+                            tracks.push({
+                                id: doc.id,
+                                ...data
+                            });
+                        }
+                    });
+                    
+                    console.log('Retrieved tracks:', tracks.length);
+                    return tracks;
+                } catch (error) {
+                    console.error('Error getting tracks:', error);
+                    throw error;
+                }
+            }
+
+            async deleteTrack(trackId) {
+                if (!this.currentUser) throw new Error('Usuario no autenticado');
+                
+                try {
+                    await deleteDoc(doc(db, 'tracks', trackId));
+                    console.log('Track deleted:', trackId);
+                } catch (error) {
+                    console.error('Error deleting track:', error);
+                    throw error;
+                }
+            }
+
+            onTracksChange(callback) {
+                if (!this.currentUser) return () => {};
+                
+                const q = query(this.tracksCollection, orderBy('createdAt', 'desc'));
+                return onSnapshot(q, (snapshot) => {
+                    const tracks = [];
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        if (data.userId === this.currentUser.uid) {
+                            tracks.push({
+                                id: doc.id,
+                                ...data
+                            });
+                        }
+                    });
+                    callback(tracks);
+                }, (error) => {
+                    console.error('Error listening to tracks:', error);
+                });
+            }
+        }
+
+        // Enhanced Cloudinary Uploader Class with Mobile Debugging
+        class CloudinaryUploader {
+            constructor() {
+                this.cloudName = 'dgy5bftjt';
+                this.uploadPreset = 'mp3_unsigned';
+                this.apiUrl = `https://api.cloudinary.com/v1_1/${this.cloudName}/auto/upload`;
+                this.debugLog = [];
+                this.initializeMobileDebugger();
+            }
+
+            initializeMobileDebugger() {
+                // Create mobile debug console
+                this.createDebugUI();
+                
+                // Log device info
+                this.mobileLog('info', 'Device Info', {
+                    userAgent: navigator.userAgent,
+                    viewport: `${window.innerWidth}x${window.innerHeight}`,
+                    memory: navigator.deviceMemory || 'unknown',
+                    connection: navigator.connection?.effectiveType || 'unknown',
+                    online: navigator.onLine
+                });
+
+                // Monitor network changes
+                window.addEventListener('online', () => this.mobileLog('success', 'Network', 'Connection restored'));
+                window.addEventListener('offline', () => this.mobileLog('error', 'Network', 'Connection lost'));
+            }
+
+            createDebugUI() {
+                const debugCSS = `
+                    .mobile-debug {
+                        position: fixed;
+                        bottom: 20px;
+                        right: 20px;
+                        z-index: 10000;
+                    }
+                    .debug-toggle {
+                        width: 60px;
+                        height: 60px;
+                        border-radius: 50%;
+                        background: #4F46E5;
+                        color: white;
+                        border: none;
+                        font-size: 20px;
+                        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                        cursor: pointer;
+                    }
+                    .debug-console {
+                        position: fixed;
+                        bottom: 0;
+                        left: 0;
+                        right: 0;
+                        background: rgba(0,0,0,0.95);
+                        color: white;
+                        max-height: 50vh;
+                        overflow-y: auto;
+                        padding: 20px;
+                        font-family: monospace;
+                        font-size: 12px;
+                        transform: translateY(100%);
+                        transition: transform 0.3s ease;
+                        z-index: 9999;
+                    }
+                    .debug-console.show {
+                        transform: translateY(0);
+                    }
+                    .debug-entry {
+                        margin-bottom: 8px;
+                        padding: 8px;
+                        border-radius: 4px;
+                        border-left: 3px solid #4F46E5;
+                    }
+                    .debug-error { border-left-color: #EF4444; background: rgba(239,68,68,0.1); }
+                    .debug-warning { border-left-color: #F59E0B; background: rgba(245,158,11,0.1); }
+                    .debug-success { border-left-color: #10B981; background: rgba(16,185,129,0.1); }
+                `;
+
+                const style = document.createElement('style');
+                style.textContent = debugCSS;
+                document.head.appendChild(style);
+
+                const debugHTML = `
+                    <div class="mobile-debug">
+                        <button class="debug-toggle" onclick="toggleMobileDebug()">
+                            <i class="fas fa-bug"></i>
+                        </button>
+                    </div>
+                    <div id="mobileDebugConsole" class="debug-console">
+                        <div style="position: sticky; top: 0; background: rgba(0,0,0,0.9); padding: 10px; margin: -20px -20px 20px -20px;">
+                            <div style="display: flex; justify-content: between; align-items: center;">
+                                <strong>📱 Mobile Debug Console</strong>
+                                <button onclick="clearMobileDebug()" style="margin-left: auto; background: none; border: 1px solid #666; color: white; padding: 5px 10px; border-radius: 4px; margin-right: 10px;">Clear</button>
+                                <button onclick="toggleMobileDebug()" style="background: none; border: 1px solid #666; color: white; padding: 5px 10px; border-radius: 4px;">Close</button>
+                            </div>
+                        </div>
+                        <div id="mobileDebugLog"></div>
+                    </div>
+                `;
+
+                document.body.insertAdjacentHTML('beforeend', debugHTML);
+
+                // Make functions global
+                window.toggleMobileDebug = () => {
+                    const console = document.getElementById('mobileDebugConsole');
+                    console.classList.toggle('show');
+                };
+
+                window.clearMobileDebug = () => {
+                    this.debugLog = [];
+                    this.renderDebugLog();
+                };
+            }
+
+            mobileLog(level, category, data) {
+                const timestamp = new Date().toISOString().split('T')[1].substring(0, 8);
+                const entry = {
+                    timestamp,
+                    level,
+                    category,
+                    data: typeof data === 'object' ? JSON.stringify(data, null, 2) : data
+                };
+
+                this.debugLog.push(entry);
+                
+                // Keep only last 100 entries
+                if (this.debugLog.length > 100) {
+                    this.debugLog = this.debugLog.slice(-100);
+                }
+
+                this.renderDebugLog();
+
+                // Also log to console with prefix
+                const message = `[${category}] ${entry.data}`;
+                switch (level) {
+                    case 'error': console.error(message); break;
+                    case 'warning': console.warn(message); break;
+                    case 'success': console.log(`✅ ${message}`); break;
+                    default: console.log(message);
+                }
+            }
+
+            renderDebugLog() {
+                const logContainer = document.getElementById('mobileDebugLog');
+                if (!logContainer) return;
+
+                logContainer.innerHTML = this.debugLog.map(entry => `
+                    <div class="debug-entry debug-${entry.level}">
+                        <strong>${entry.timestamp}</strong> [${entry.category}]<br>
+                        <span style="white-space: pre-wrap;">${entry.data}</span>
+                    </div>
+                `).join('');
+
+                logContainer.scrollTop = logContainer.scrollHeight;
+            }
+
+            async uploadFile(file, onProgress = null) {
+                const uploadId = Date.now();
+                this.mobileLog('info', 'Upload Start', `File: ${file.name}, Size: ${(file.size/1024/1024).toFixed(2)}MB`);
+
+                return new Promise((resolve, reject) => {
+                    // Enhanced validation with mobile logging
+                    if (!this.isValidAudioFile(file)) {
+                        const error = `Invalid file type: ${file.type}`;
+                        this.mobileLog('error', 'Validation', error);
+                        reject(new Error(error));
+                        return;
+                    }
+
+                    const maxSize = 50 * 1024 * 1024;
+                    if (file.size > maxSize) {
+                        const error = `File too large: ${(file.size/1024/1024).toFixed(2)}MB (max 50MB)`;
+                        this.mobileLog('error', 'Validation', error);
+                        reject(new Error(error));
+                        return;
+                    }
+
+                    // Network check
+                    if (!navigator.onLine) {
+                        const error = 'No internet connection';
+                        this.mobileLog('error', 'Network', error);
+                        reject(new Error(error));
+                        return;
+                    }
+
+                    this.mobileLog('info', 'Upload Config', {
+                        cloudName: this.cloudName,
+                        uploadPreset: this.uploadPreset,
+                        apiUrl: this.apiUrl
+                    });
+
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    formData.append('upload_preset', this.uploadPreset);
+                    formData.append('resource_type', 'video');
+
+                    const xhr = new XMLHttpRequest();
+
+                    // Enhanced progress tracking
+                    if (onProgress) {
+                        xhr.upload.addEventListener('progress', (e) => {
+                            if (e.lengthComputable) {
+                                const percent = (e.loaded / e.total) * 100;
+                                this.mobileLog('info', 'Upload Progress', `${percent.toFixed(1)}% (${(e.loaded/1024/1024).toFixed(2)}/${(e.total/1024/1024).toFixed(2)} MB)`);
+                                onProgress(percent);
+                            }
+                        });
+                    }
+
+                    // Success handler with detailed logging
+                    xhr.addEventListener('load', () => {
+                        this.mobileLog('info', 'Server Response', `Status: ${xhr.status}, Response length: ${xhr.responseText?.length || 0}`);
+                        
+                        if (xhr.status === 200) {
+                            try {
+                                const result = JSON.parse(xhr.responseText);
+                                this.mobileLog('success', 'Upload Complete', {
+                                    publicId: result.public_id,
+                                    format: result.format,
+                                    bytes: result.bytes,
+                                    url: result.secure_url
+                                });
+                                resolve(result);
+                            } catch (error) {
+                                this.mobileLog('error', 'Response Parse', `JSON parse error: ${error.message}`);
+                                reject(new Error('Failed to parse server response'));
+                            }
+                        } else {
+                            this.mobileLog('error', 'Server Error', `HTTP ${xhr.status}: ${xhr.responseText?.substring(0, 200)}`);
+                            reject(new Error(`Upload failed: ${xhr.status} ${xhr.statusText}`));
+                        }
+                    });
+
+                    // Error handlers with detailed logging
+                    xhr.addEventListener('error', () => {
+                        this.mobileLog('error', 'Network Error', 'XHR network error occurred');
+                        reject(new Error('Network error during upload'));
+                    });
+
+                    xhr.addEventListener('timeout', () => {
+                        this.mobileLog('error', 'Timeout', `Upload timed out after ${xhr.timeout}ms`);
+                        reject(new Error('Upload timed out'));
+                    });
+
+                    xhr.addEventListener('abort', () => {
+                        this.mobileLog('warning', 'Upload Abort', 'Upload was cancelled');
+                        reject(new Error('Upload was cancelled'));
+                    });
+
+                    // Configure request
+                    xhr.timeout = 5 * 60 * 1000; // 5 minutes
+                    xhr.open('POST', this.apiUrl);
+                    
+                    this.mobileLog('info', 'Request Send', 'Sending upload request to Cloudinary');
+                    xhr.send(formData);
+                });
+            }
+
+            async uploadMultipleFiles(files, onProgress = null, onFileComplete = null) {
+                const results = [];
+                const totalFiles = files.length;
+                let completedFiles = 0;
+
+                this.mobileLog('info', 'Batch Upload', `Starting upload of ${totalFiles} files`);
+
+                for (let i = 0; i < files.length; i++) {
+                    const file = files[i];
+                    
+                    try {
+                        const result = await this.uploadFile(file, (fileProgress) => {
+                            if (onProgress) {
+                                const overallProgress = ((completedFiles / totalFiles) + (fileProgress / 100 / totalFiles)) * 100;
+                                onProgress(overallProgress, `Uploading ${file.name}...`);
+                            }
+                        });
+
+                        results.push({
+                            success: true,
+                            file: file,
+                            result: result
+                        });
+
+                        completedFiles++;
+                        
+                        if (onFileComplete) {
+                            onFileComplete(file, result, null);
+                        }
+
+                        if (onProgress) {
+                            onProgress((completedFiles / totalFiles) * 100, `${completedFiles}/${totalFiles} files completed`);
+                        }
+
+                    } catch (error) {
+                        this.mobileLog('error', 'File Upload Failed', `${file.name}: ${error.message}`);
+                        
+                        results.push({
+                            success: false,
+                            file: file,
+                            error: error.message
+                        });
+
+                        if (onFileComplete) {
+                            onFileComplete(file, null, error);
+                        }
+                    }
+                }
+
+                this.mobileLog('success', 'Batch Complete', `${results.filter(r => r.success).length}/${totalFiles} files uploaded successfully`);
+                return results;
+            }
+
+            isValidAudioFile(file) {
+                const validTypes = [
+                    'audio/mpeg',
+                    'audio/mp3',
+                    'audio/mp4',
+                    'audio/x-m4a',
+                    'audio/aac'
+                ];
+
+                const validExtensions = ['.mp3', '.m4a', '.aac'];
+                const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
+
+                const isValid = validTypes.includes(file.type) || validExtensions.includes(fileExtension);
+                
+                this.mobileLog('info', 'File Validation', {
+                    fileName: file.name,
+                    fileType: file.type,
+                    extension: fileExtension,
+                    isValid: isValid
+                });
+
+                return isValid;
+            }
+
+            extractMetadata(filename) {
+                const nameWithoutExt = filename.replace(/\.[^/.]+$/, "");
+                const parts = nameWithoutExt.split(' - ');
+                
+                if (parts.length >= 2) {
+                    return {
+                        artist: parts[0].trim(),
+                        title: parts.slice(1).join(' - ').trim()
+                    };
+                }
+                
+                return {
+                    artist: 'Artista Desconocido',
+                    title: nameWithoutExt.trim()
+                };
+            }
+        }
+
+        // Initialize services when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            window.firebaseService = new FirebaseService();
+            window.cloudinaryUploader = new CloudinaryUploader();
+        });
+    </script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #121212;
+            color: #e0e0e0;
+            overscroll-behavior: none;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+            padding-bottom: 80px;
+        }
+        
+        .progress-container {
+            height: 5px;
+            background-color: #333;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background-color: #1DB954;
+            border-radius: 5px;
+            transition: width 0.3s ease;
+        }
+        
+        .track-item {
+            background: linear-gradient(135deg, #1e1e1e 0%, #2a2a2a 100%);
+            border: 1px solid #333;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 15px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            cursor: pointer;
+        }
+        
+        .track-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+        
+        .play-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #1DB954 0%, #1aa34a 100%);
+            border: none;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(29, 185, 84, 0.3);
+        }
+        
+        .play-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(29, 185, 84, 0.4);
+        }
+        
+        .control-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .control-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-1px);
+        }
+        
+        .upload-container {
+            background: linear-gradient(135deg, #1e1e1e 0%, #2a2a2a 100%);
+            border: 2px dashed #444;
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+            transition: all 0.3s ease;
+            margin-bottom: 30px;
+        }
+        
+        .upload-container:hover {
+            border-color: #1DB954;
+            background: linear-gradient(135deg, #1e1e1e 0%, #2a2a2a 100%);
+        }
+        
+        .upload-container.drag-over {
+            border-color: #1DB954;
+            background: rgba(29, 185, 84, 0.1);
+        }
+        
+        .upload-btn {
+            background: linear-gradient(135deg, #1DB954 0%, #1aa34a 100%);
+            border: none;
+            color: white;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(29, 185, 84, 0.3);
+        }
+        
+        .upload-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(29, 185, 84, 0.4);
+        }
+        
+        .auth-container {
+            background: linear-gradient(135deg, #1e1e1e 0%, #2a2a2a 100%);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+        
+        .auth-btn {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 15px;
+        }
+        
+        .google-btn {
+            background: #4285f4;
+            color: white;
+        }
+        
+        .google-btn:hover {
+            background: #357ae8;
+            transform: translateY(-2px);
+        }
+        
+        .email-btn {
+            background: linear-gradient(135deg, #1DB954 0%, #1aa34a 100%);
+            color: white;
+        }
+        
+        .email-btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .create-btn {
+            background: transparent;
+            color: #1DB954;
+            border: 2px solid #1DB954;
+        }
+        
+        .create-btn:hover {
+            background: #1DB954;
+            color: white;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 15px;
+            border: 1px solid #444;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            color: white;
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: #1DB954;
+            box-shadow: 0 0 0 2px rgba(29, 185, 84, 0.2);
+        }
+        
+        .audio-player {
+            background: #333;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+        
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .loading-content {
+            background: #2a2a2a;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            min-width: 300px;
+        }
+        
+        .spinner {
+            border: 3px solid #333;
+            border-top: 3px solid #1DB954;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #2a2a2a;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            border-left: 4px solid #1DB954;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            z-index: 1001;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+        }
+        
+        .notification.show {
+            transform: translateX(0);
+        }
+        
+        .notification.error {
+            border-left-color: #e74c3c;
+        }
+        
+        .notification.success {
+            border-left-color: #2ecc71;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="loading-content">
+            <div class="spinner"></div>
+            <h3 id="loadingTitle">Cargando...</h3>
+            <p id="loadingMessage">Por favor espera...</p>
+        </div>
+    </div>
+
+    <!-- Auth Section -->
+    <div id="authSection" class="min-h-screen flex items-center justify-center p-4">
+        <div class="auth-container max-w-md w-full">
+            <div class="text-center mb-8">
+                <h1 class="text-4xl font-bold bg-gradient-to-r from-green-400 to-blue-500 bg-clip-text text-transparent mb-4">
+                    𝐅𝐮𝐥𝐥 𝐌ยรเא
+                </h1>
+                <p class="text-gray-400">Tu biblioteca musical personal</p>
+            </div>
+            
+            <!-- Google Sign In -->
+            <button id="googleSignInBtn" class="auth-btn google-btn">
+                <i class="fab fa-google mr-3"></i>
+                Continuar con Google
+            </button>
+            
+            <div class="text-center my-6 text-gray-500">o</div>
+            
+            <!-- Email Sign In Form -->
+            <form id="emailSignInForm">
+                <input type="email" id="emailInput" class="form-input" placeholder="Correo electrónico" required>
+                <input type="password" id="passwordInput" class="form-input" placeholder="Contraseña" required>
+                <button type="submit" class="auth-btn email-btn">Iniciar Sesión</button>
+            </form>
+            
+            <button id="signUpBtn" class="auth-btn create-btn">Crear Cuenta Nueva</button>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="mainApp" style="display: none;">
+        <!-- Header -->
+        <header class="bg-gray-900 p-4">
+            <div class="max-w-6xl mx-auto flex justify-between items-center">
+                <h1 class="text-2xl font-bold bg-gradient-to-r from-green-400 to-blue-500 bg-clip-text text-transparent">
+                    𝐅𝐮𝐥𝐥 𝐌ยรเא
+                </h1>
+                <div class="flex items-center space-x-4">
+                    <span id="userInfo" class="text-gray-300"></span>
+                    <button id="signOutBtn" class="control-btn">
+                        <i class="fas fa-sign-out-alt mr-2"></i>Salir
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="max-w-6xl mx-auto p-4">
+            <!-- Upload Section -->
+            <section class="upload-container" id="uploadContainer">
+                <div class="mb-6">
+                    <i class="fas fa-cloud-upload-alt text-6xl text-gray-500 mb-4"></i>
+                    <h3 class="text-xl font-semibold mb-2">Sube tu música</h3>
+                    <p class="text-gray-400 mb-6">Arrastra archivos aquí o haz clic para seleccionar</p>
+                    
+                    <input type="file" id="fileInput" multiple accept=".mp3,.m4a" style="display: none;">
+                    <button id="selectFilesBtn" class="upload-btn">
+                        <i class="fas fa-folder-open mr-2"></i>
+                        Seleccionar Archivos
+                    </button>
+                </div>
+                
+                <div id="selectedFiles" style="display: none;">
+                    <h4 class="text-lg font-semibold mb-4">Archivos seleccionados:</h4>
+                    <div id="filesList" class="mb-4"></div>
+                    <button id="uploadBtn" class="upload-btn">
+                        <i class="fas fa-upload mr-2"></i>
+                        Subir Archivos
+                    </button>
+                </div>
+            </section>
+
+            <!-- Tracks Section -->
+            <section id="tracksSection">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold">Mi Biblioteca</h2>
+                    <button id="refreshBtn" class="control-btn">
+                        <i class="fas fa-sync-alt mr-2"></i>Actualizar
+                    </button>
+                </div>
+                
+                <div id="tracksList">
+                    <div class="text-center py-12">
+                        <i class="fas fa-music text-6xl text-gray-600 mb-4"></i>
+                        <p class="text-gray-400">No hay música todavía. ¡Sube algunos archivos!</p>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        let currentAudio = null;
+        let musicApp = null;
+
+        // Music App Class
+        class MusicApp {
+            constructor() {
+                this.tracks = [];
+                this.selectedFiles = [];
+                this.setupEventListeners();
+                this.setupDragAndDrop();
+            }
+
+            setupEventListeners() {
+                // Auth events
+                document.getElementById('googleSignInBtn').addEventListener('click', () => this.signInWithGoogle());
+                document.getElementById('emailSignInForm').addEventListener('submit', (e) => this.signInWithEmail(e));
+                document.getElementById('signUpBtn').addEventListener('click', () => this.signUpWithEmail());
+                document.getElementById('signOutBtn').addEventListener('click', () => this.signOut());
+
+                // File upload events
+                document.getElementById('selectFilesBtn').addEventListener('click', () => {
+                    document.getElementById('fileInput').click();
+                });
+                document.getElementById('fileInput').addEventListener('change', (e) => this.handleFileSelect(e));
+                document.getElementById('uploadBtn').addEventListener('click', () => this.uploadFiles());
+                document.getElementById('refreshBtn').addEventListener('click', () => this.loadTracks());
+            }
+
+            setupDragAndDrop() {
+                const uploadContainer = document.getElementById('uploadContainer');
+                
+                ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                    uploadContainer.addEventListener(eventName, (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                    });
+                });
+
+                ['dragenter', 'dragover'].forEach(eventName => {
+                    uploadContainer.addEventListener(eventName, () => {
+                        uploadContainer.classList.add('drag-over');
+                    });
+                });
+
+                ['dragleave', 'drop'].forEach(eventName => {
+                    uploadContainer.addEventListener(eventName, () => {
+                        uploadContainer.classList.remove('drag-over');
+                    });
+                });
+
+                uploadContainer.addEventListener('drop', (e) => {
+                    const files = Array.from(e.dataTransfer.files);
+                    this.handleFiles(files);
+                });
+            }
+
+            async signInWithGoogle() {
+                try {
+                    await window.firebaseService.signInWithGoogle();
+                } catch (error) {
+                    this.showNotification('Error al iniciar sesión con Google', 'error');
+                }
+            }
+
+            async signInWithEmail(e) {
+                e.preventDefault();
+                const email = document.getElementById('emailInput').value;
+                const password = document.getElementById('passwordInput').value;
+                
+                try {
+                    await window.firebaseService.signInWithEmail(email, password);
+                } catch (error) {
+                    this.showNotification('Error al iniciar sesión: ' + error.message, 'error');
+                }
+            }
+
+            async signUpWithEmail() {
+                const email = document.getElementById('emailInput').value;
+                const password = document.getElementById('passwordInput').value;
+                
+                if (!email || !password) {
+                    this.showNotification('Por favor completa todos los campos', 'error');
+                    return;
+                }
+                
+                try {
+                    await window.firebaseService.signUpWithEmail(email, password);
+                    this.showNotification('Cuenta creada exitosamente', 'success');
+                } catch (error) {
+                    this.showNotification('Error al crear cuenta: ' + error.message, 'error');
+                }
+            }
+
+            async signOut() {
+                try {
+                    await window.firebaseService.signOut();
+                } catch (error) {
+                    this.showNotification('Error al cerrar sesión', 'error');
+                }
+            }
+
+            handleFileSelect(e) {
+                const files = Array.from(e.target.files);
+                this.handleFiles(files);
+            }
+
+            handleFiles(files) {
+                const audioFiles = files.filter(file => 
+                    file.type.startsWith('audio/') || 
+                    file.name.toLowerCase().endsWith('.mp3') || 
+                    file.name.toLowerCase().endsWith('.m4a')
+                );
+                
+                if (audioFiles.length === 0) {
+                    this.showNotification('Por favor selecciona archivos de audio válidos', 'error');
+                    return;
+                }
+                
+                this.selectedFiles = audioFiles;
+                this.displaySelectedFiles();
+            }
+
+            displaySelectedFiles() {
+                const selectedFilesDiv = document.getElementById('selectedFiles');
+                const filesList = document.getElementById('filesList');
+                
+                if (this.selectedFiles.length === 0) {
+                    selectedFilesDiv.style.display = 'none';
+                    return;
+                }
+                
+                selectedFilesDiv.style.display = 'block';
+                
+                filesList.innerHTML = this.selectedFiles.map(file => `
+                    <div class="flex justify-between items-center p-3 bg-gray-800 rounded-lg mb-2">
+                        <div>
+                            <p class="font-medium">${file.name}</p>
+                            <p class="text-sm text-gray-400">${(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                        </div>
+                        <i class="fas fa-music text-green-400"></i>
+                    </div>
+                `).join('');
+            }
+
+            async uploadFiles() {
+                if (this.selectedFiles.length === 0) {
+                    this.showNotification('No hay archivos seleccionados', 'error');
+                    return;
+                }
+
+                this.showLoading('Subiendo archivos...', 'Preparando subida...');
+
+                try {
+                    let successCount = 0;
+                    let errorCount = 0;
+
+                    const results = await window.cloudinaryUploader.uploadMultipleFiles(
+                        this.selectedFiles,
+                        (progress, message) => {
+                            this.updateLoading('Subiendo archivos...', message);
+                        },
+                        async (file, result, error) => {
+                            if (result) {
+                                try {
+                                    const metadata = window.cloudinaryUploader.extractMetadata(file.name);
+                                    const trackData = {
+                                        title: metadata.title,
+                                        artist: metadata.artist,
+                                        filename: file.name,
+                                        cloudinaryId: result.public_id,
+                                        audioUrl: result.secure_url,
+                                        format: result.format,
+                                        duration: result.duration,
+                                        size: result.bytes
+                                    };
+                                    
+                                    await window.firebaseService.addTrack(trackData);
+                                    successCount++;
+                                } catch (dbError) {
+                                    console.error('Error saving to database:', dbError);
+                                    errorCount++;
+                                }
+                            } else {
+                                errorCount++;
+                            }
+                        }
+                    );
+
+                    this.hideLoading();
+
+                    if (successCount > 0) {
+                        this.showNotification(`${successCount} archivo(s) subido(s) exitosamente`, 'success');
+                        this.loadTracks();
+                    }
+
+                    if (errorCount > 0) {
+                        this.showNotification(`${errorCount} archivo(s) fallaron al subir`, 'error');
+                    }
+
+                    // Clear selection
+                    this.selectedFiles = [];
+                    document.getElementById('fileInput').value = '';
+                    this.displaySelectedFiles();
+
+                } catch (error) {
+                    this.hideLoading();
+                    this.showNotification('Error durante la subida: ' + error.message, 'error');
+                }
+            }
+
+            async loadTracks() {
+                try {
+                    const tracks = await window.firebaseService.getAllTracks();
+                    this.tracks = tracks;
+                    this.renderTracks();
+                } catch (error) {
+                    console.error('Error loading tracks:', error);
+                    this.showNotification('Error al cargar las canciones', 'error');
+                }
+            }
+
+            renderTracks() {
+                const tracksList = document.getElementById('tracksList');
+                
+                if (this.tracks.length === 0) {
+                    tracksList.innerHTML = `
+                        <div class="text-center py-12">
+                            <i class="fas fa-music text-6xl text-gray-600 mb-4"></i>
+                            <p class="text-gray-400">No hay música todavía. ¡Sube algunos archivos!</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                tracksList.innerHTML = this.tracks.map(track => `
+                    <div class="track-item">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-4">
+                                <button class="play-btn" onclick="musicApp.playTrack('${track.audioUrl}', '${track.title}')">
+                                    <i class="fas fa-play"></i>
+                                </button>
+                                <div>
+                                    <h3 class="text-lg font-semibold">${track.title || 'Sin título'}</h3>
+                                    <p class="text-gray-400">${track.artist || 'Artista desconocido'}</p>
+                                    <p class="text-sm text-gray-500">${track.filename}</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <button class="control-btn" onclick="musicApp.deleteTrack('${track.id}')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div id="player-${track.id}" class="audio-player" style="display: none;">
+                            <audio controls class="w-full">
+                                <source src="${track.audioUrl}" type="audio/mpeg">
+                                Tu navegador no soporta el elemento de audio.
+                            </audio>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            playTrack(url, title) {
+                // Stop current audio if playing
+                if (currentAudio) {
+                    currentAudio.pause();
+                    currentAudio = null;
+                }
+
+                // Create and play new audio
+                currentAudio = new Audio(url);
+                currentAudio.play().catch(error => {
+                    console.error('Error playing audio:', error);
+                    this.showNotification('Error al reproducir el audio', 'error');
+                });
+
+                this.showNotification(`Reproduciendo: ${title}`, 'success');
+            }
+
+            async deleteTrack(trackId) {
+                if (!confirm('¿Estás seguro de que quieres eliminar esta canción?')) {
+                    return;
+                }
+
+                try {
+                    await window.firebaseService.deleteTrack(trackId);
+                    this.showNotification('Canción eliminada', 'success');
+                    this.loadTracks();
+                } catch (error) {
+                    this.showNotification('Error al eliminar la canción', 'error');
+                }
+            }
+
+            showLoading(title, message) {
+                document.getElementById('loadingTitle').textContent = title;
+                document.getElementById('loadingMessage').textContent = message;
+                document.getElementById('loadingOverlay').style.display = 'flex';
+            }
+
+            updateLoading(title, message) {
+                document.getElementById('loadingTitle').textContent = title;
+                document.getElementById('loadingMessage').textContent = message;
+            }
+
+            hideLoading() {
+                document.getElementById('loadingOverlay').style.display = 'none';
+            }
+
+            showNotification(message, type = 'success') {
+                // Remove existing notifications
+                document.querySelectorAll('.notification').forEach(n => n.remove());
+
+                const notification = document.createElement('div');
+                notification.className = `notification ${type}`;
+                notification.innerHTML = `
+                    <div class="flex items-center">
+                        <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'} mr-3"></i>
+                        <span>${message}</span>
+                    </div>
+                `;
+
+                document.body.appendChild(notification);
+
+                // Show notification
+                setTimeout(() => notification.classList.add('show'), 100);
+
+                // Hide notification after 5 seconds
+                setTimeout(() => {
+                    notification.classList.remove('show');
+                    setTimeout(() => notification.remove(), 300);
+                }, 5000);
+            }
+        }
+
+        // Initialize app when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            musicApp = new MusicApp();
+            window.musicApp = musicApp;
+        });
+    </script>
+</body>
+</html>
