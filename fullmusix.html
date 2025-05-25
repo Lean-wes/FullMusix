@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+    <title>𝐅𝐮𝐥𝐥 𝐌ยรเא</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --color-primary: #22c55e;
+            --color-primary-dark: #16a34a;
+            --color-dark: #111111;
+            --color-dark-lighter: #181818;
+            --color-dark-medium: #222222;
+            --color-light: #f8fafc;
+            --color-light-muted: #94a3b8;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--color-dark);
+            color: var(--color-light);
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .eq-slider {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 100px;
+            background: transparent;
+            transform: rotate(270deg);
+            margin: 0;
+        }
+        
+        .eq-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--color-primary);
+            cursor: pointer;
+            border: none;
+        }
+        
+        .eq-slider::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 3px;
+            background: #374151;
+            border-radius: 3px;
+        }
+        
+        .horizontal-slider {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 5px;
+            background: #374151;
+            border-radius: 3px;
+        }
+        
+        .horizontal-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--color-primary);
+            cursor: pointer;
+            border: none;
+        }
+        
+        .eq-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            height: 120px;
+            margin-top: 20px;
+        }
+        
+        .eq-band {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 30px;
+        }
+        
+        .eq-dot {
+            width: 12px;
+            height: 12px;
+            background-color: var(--color-primary);
+            border-radius: 50%;
+            margin-bottom: 8px;
+        }
+        
+        .eq-freq {
+            font-size: 10px;
+            color: var(--color-light-muted);
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 3px;
+            background-color: #374151;
+            position: relative;
+            border-radius: 3px;
+            margin: 10px 0;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background-color: var(--color-primary);
+            border-radius: 3px;
+            width: 0%;
+        }
+        
+        .visualizer {
+            display: flex;
+            justify-content: space-between;
+            height: 30px;
+            margin-bottom: 15px;
+        }
+        
+        .visualizer-bar {
+            width: 3px;
+            background-color: var(--color-primary);
+            border-radius: 3px;
+            height: 5px;
+        }
+        
+        .auth-section, .main-app {
+            display: none;
+        }
+        
+        /* Overlay for modals */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 50;
+        }
+        
+        .modal-content {
+            background-color: var(--color-dark-lighter);
+            border-radius: 12px;
+            width: 90%;
+            max-width: 400px;
+            padding: 20px;
+            border: 1px solid #333;
+        }
+    </style>
+</head>
+<body>
+    <!-- Auth Section -->
+    <div id="authSection" class="flex flex-col items-center justify-center h-full px-6">
+        <div class="text-center mb-8">
+            <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-500 mb-4">
+                <i class="fas fa-music text-white text-2xl"></i>
+            </div>
+            <h1 class="text-4xl font-bold mb-2">𝐅𝐮𝐥𝐥 𝐌ยรเא</h1>
+            <p class="text-gray-400">Tu reproductor de música personal en la nube</p>
+        </div>
+        
+        <div class="w-full max-w-md">
+            <!-- Auth Tabs -->
+            <div class="flex mb-6">
+                <button id="loginTab" class="flex-1 py-3 text-white font-medium border-b-2 border-green-500">Iniciar Sesión</button>
+                <button id="registerTab" class="flex-1 py-3 text-gray-400 font-medium border-b-2 border-transparent">Registrarse</button>
+            </div>
+            
+            <!-- Login Form -->
+            <div id="loginForm" class="tab-content active">
+                <div class="mb-4">
+                    <input type="email" id="loginEmail" placeholder="Correo electrónico" class="w-full px-4 py-3 bg-gray-800 rounded-lg text-white mb-3">
+                    <input type="password" id="loginPassword" placeholder="Contraseña" class="w-full px-4 py-3 bg-gray-800 rounded-lg text-white">
+                </div>
+                
+                <button id="loginButton" class="w-full bg-green-500 text-white font-medium py-3 px-4 rounded-lg mb-4">
+                    <i class="fas fa-envelope mr-2"></i> Iniciar Sesión
+                </button>
+                
+                <div class="relative flex py-3 items-center">
+                    <div class="flex-grow border-t border-gray-700"></div>
+                    <span class="flex-shrink mx-3 text-gray-400 text-sm">o</span>
+                    <div class="flex-grow border-t border-gray-700"></div>
+                </div>
+                
+                <button id="googleLogin" class="w-full bg-green-500 text-white font-medium py-3 px-4 rounded-lg">
+                    <i class="fab fa-google mr-2"></i> Continuar con Google
+                </button>
+                
+                <p class="text-sm text-center text-gray-400 mt-6">
+                    Necesitas una cuenta para subir y guardar tus canciones
+                </p>
+            </div>
+            
+            <!-- Register Form -->
+            <div id="registerForm" class="tab-content">
+                <div class="mb-4">
+                    <input type="email" id="registerEmail" placeholder="Correo electrónico" class="w-full px-4 py-3 bg-gray-800 rounded-lg text-white mb-3">
+                    <input type="password" id="registerPassword" placeholder="Contraseña" class="w-full px-4 py-3 bg-gray-800 rounded-lg text-white mb-3">
+                    <input type="password" id="registerConfirmPassword" placeholder="Confirmar contraseña" class="w-full px-4 py-3 bg-gray-800 rounded-lg text-white">
+                </div>
+                
+                <button id="registerButton" class="w-full bg-green-500 text-white font-medium py-3 px-4 rounded-lg">
+                    <i class="fas fa-user-plus mr-2"></i> Crear Cuenta
+                </button>
+                
+                <p class="text-sm text-center text-gray-400 mt-6">
+                    Al registrarte aceptas nuestros términos y condiciones
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Main App -->
+    <div id="mainApp" class="flex flex-col h-full" style="display: none;">
+        <!-- Header -->
+        <header class="flex items-center justify-between p-4 border-b border-gray-800">
+            <div class="flex items-center">
+                <i class="fas fa-music text-green-500 mr-2"></i>
+                <h1 class="text-xl font-bold">𝐅𝐮𝐥𝐥 𝐌ยรเא</h1>
+            </div>
+            <button id="settingsButton" class="text-gray-400">
+                <i class="fas fa-cog"></i>
+            </button>
+        </header>
+        
+        <!-- Tab Navigation -->
+        <nav class="flex border-b border-gray-800">
+            <button id="playerTab" class="flex-1 py-4 text-green-500 font-medium border-b-2 border-green-500">
+                <i class="fas fa-play mr-1"></i> Reproductor
+            </button>
+            <button id="libraryTab" class="flex-1 py-4 text-gray-400 font-medium">
+                <i class="fas fa-list mr-1"></i> Biblioteca
+            </button>
+            <button id="equalizerTab" class="flex-1 py-4 text-gray-400 font-medium">
+                <i class="fas fa-sliders-h mr-1"></i> Ecualizador
+            </button>
+        </nav>
+        
+        <!-- Content Container -->
+        <div class="flex-1 overflow-y-auto">
+            <!-- Player Tab Content -->
+            <div id="playerContent" class="tab-content active p-4 flex flex-col items-center justify-between h-full">
+                <div class="w-full flex-1 flex flex-col items-center justify-center">
+                    <div class="w-64 h-64 bg-gray-800 rounded-lg flex items-center justify-center mb-6">
+                        <i class="fas fa-music text-gray-600 text-5xl"></i>
+                    </div>
+                    
+                    <h2 id="trackTitle" class="text-xl font-bold mb-1">Selecciona una canción</h2>
+                    <p id="trackArtist" class="text-gray-400 mb-6">Artista</p>
+                    
+                    <div class="visualizer w-full">
+                        <!-- Visualizer bars will be generated by JS -->
+                    </div>
+                    
+                    <div class="w-full mb-4">
+                        <div class="flex justify-between text-xs text-gray-400">
+                            <span id="currentTime">0:00</span>
+                            <span id="totalTime">0:00</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center justify-center space-x-6 mb-6">
+                        <button class="text-gray-400 hover:text-white">
+                            <i class="fas fa-random text-xl"></i>
+                        </button>
+                        <button id="prevButton" class="text-gray-400 hover:text-white">
+                            <i class="fas fa-step-backward text-2xl"></i>
+                        </button>
+                        <button id="playPauseButton" class="bg-green-500 text-white rounded-full w-16 h-16 flex items-center justify-center">
+                            <i class="fas fa-play text-2xl"></i>
+                        </button>
+                        <button id="nextButton" class="text-gray-400 hover:text-white">
+                            <i class="fas fa-step-forward text-2xl"></i>
+                        </button>
+                        <button class="text-gray-400 hover:text-white">
+                            <i class="fas fa-repeat text-xl"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="w-full flex items-center">
+                        <i class="fas fa-volume-down text-gray-400 mr-3"></i>
+                        <input type="range" id="volumeSlider" class="horizontal-slider flex-1" min="0" max="100" value="80">
+                        <i class="fas fa-volume-up text-gray-400 ml-3"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Library Tab Content -->
+            <div id="libraryContent" class="tab-content p-4">
+                <button id="addSongsButton" class="w-full bg-green-500 text-white font-medium py-3 px-4 rounded-lg mb-4">
+                    <i class="fas fa-plus mr-2"></i> Agregar canciones
+                </button>
+                
+                <div class="relative mb-4">
+                    <input type="text" placeholder="Buscar canciones..." class="w-full px-4 py-3 bg-gray-800 rounded-lg text-white pr-10">
+                    <button class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+                
+                <div id="emptyLibrary" class="text-center py-12">
+                    <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-800 text-gray-600 mb-4">
+                        <i class="fas fa-exclamation-circle text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-medium text-white mb-2">Biblioteca anterior encontrada</h3>
+                    <p class="text-gray-400 mb-6">Agrega tus archivos de música nuevamente</p>
+                </div>
+                
+                <div id="songsList" class="space-y-3" style="display: none;">
+                    <!-- Songs will be added here by JS -->
+                </div>
+            </div>
+            
+            <!-- Equalizer Tab Content -->
+            <div id="equalizerContent" class="tab-content p-4">
+                <h3 class="text-xl font-medium mb-4">Ecualizador</h3>
+                
+                <div class="eq-container">
+                    <div class="eq-band">
+                        <div class="eq-dot"></div>
+                        <input type="range" class="horizontal-slider" min="-12" max="12" value="0" orient="vertical">
+                        <span class="eq-freq">60Hz</span>
+                    </div>
+                    <div class="eq-band">
+                        <div class="eq-dot"></div>
+                        <input type="range" class="horizontal-slider" min="-12" max="12" value="0" orient="vertical">
+                        <span class="eq-freq">170Hz</span>
+                    </div>
+                    <div class="eq-band">
+                        <div class="eq-dot"></div>
+                        <input type="range" class="horizontal-slider" min="-12" max="12" value="0" orient="vertical">
+                        <span class="eq-freq">310Hz</span>
+                    </div>
+                    <div class="eq-band">
+                        <div class="eq-dot"></div>
+                        <input type="range" class="horizontal-slider" min="-12" max="12" value="0" orient="vertical">
+                        <span class="eq-freq">600Hz</span>
+                    </div>
+                    <div class="eq-band">
+                        <div class="eq-dot"></div>
+                        <input type="range" class="horizontal-slider" min="-12" max="12" value="0" orient="vertical">
+                        <span class="eq-freq">1kHz</span>
+                    </div>
+                    <div class="eq-band">
+                        <div class="eq-dot"></div>
+                        <input type="range" class="horizontal-slider" min="-12" max="12" value="0" orient="vertical">
+                        <span class="eq-freq">3kHz</span>
+                    </div>
+                    <div class="eq-band">
+                        <div class="eq-dot"></div>
+                        <input type="range" class="horizontal-slider" min="-12" max="12" value="0" orient="vertical">
+                        <span class="eq-freq">6kHz</span>
+                    </div>
+                    <div class="eq-band">
+                        <div class="eq-dot"></div>
+                        <input type="range" class="horizontal-slider" min="-12" max="12" value="0" orient="vertical">
+                        <span class="eq-freq">12kHz</span>
+                    </div>
+                </div>
+                
+                <h3 class="text-xl font-medium mt-8 mb-4">Preajustes</h3>
+                <div class="grid grid-cols-2 gap-3 mb-6">
+                    <button class="bg-gray-800 text-white p-3 rounded-lg flex items-center">
+                        <i class="fas fa-equals text-green-500 mr-2"></i> Plano
+                    </button>
+                    <button class="bg-gray-800 text-white p-3 rounded-lg flex items-center">
+                        <i class="fas fa-guitar text-gray-400 mr-2"></i> Rock
+                    </button>
+                    <button class="bg-gray-800 text-white p-3 rounded-lg flex items-center">
+                        <i class="fas fa-music text-green-500 mr-2"></i> Pop
+                    </button>
+                    <button class="bg-gray-800 text-white p-3 rounded-lg flex items-center">
+                        <i class="fas fa-compact-disc text-gray-400 mr-2"></i> Jazz
+                    </button>
+                    <button class="bg-gray-800 text-white p-3 rounded-lg flex items-center">
+                        <i class="fas fa-violin text-gray-400 mr-2"></i> Clásica
+                    </button>
+                    <button class="bg-gray-800 text-white p-3 rounded-lg flex items-center">
+                        <i class="fas fa-volume-up text-green-500 mr-2"></i> Bass Boost
+                    </button>
+                </div>
+                
+                <h3 class="text-xl font-medium mb-4">Efectos</h3>
+                
+                <div class="mb-4">
+                    <div class="flex justify-between mb-1">
+                        <span>Reverberación</span>
+                        <span>0%</span>
+                    </div>
+                    <input type="range" class="horizontal-slider" min="0" max="100" value="0">
+                </div>
+                
+                <div>
+                    <div class="flex justify-between mb-1">
+                        <span>Velocidad</span>
+                        <span>1.0x</span>
+                    </div>
+                    <input type="range" class="horizontal-slider" min="50" max="150" value="100">
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Upload Modal -->
+    <div id="uploadModal" class="modal-overlay">
+        <div class="modal-content">
+            <h3 class="text-xl font-bold mb-4">Subir música</h3>
+            <p class="text-gray-400 mb-4">Selecciona archivos MP3 para subir a tu biblioteca</p>
+            
+            <input type="file" id="fileInput" accept=".mp3" multiple class="hidden">
+            <label for="fileInput" class="block w-full bg-green-500 text-white text-center font-medium py-3 px-4 rounded-lg mb-4 cursor-pointer">
+                <i class="fas fa-file-upload mr-2"></i> Seleccionar archivos
+            </label>
+            
+            <div id="uploadProgress" class="hidden mb-4">
+                <div class="flex justify-between mb-1">
+                    <span id="uploadFileName">archivo.mp3</span>
+                    <span id="uploadPercent">0%</span>
+                </div>
+                <div class="w-full bg-gray-800 rounded-full h-2 mb-4">
+                    <div id="uploadProgressBar" class="bg-green-500 h-2 rounded-full" style="width: 0%"></div>
+                </div>
+            </div>
+            
+            <div class="flex justify-end">
+                <button id="closeUploadModal" class="text-gray-400 hover:text-white mr-4">Cancelar</button>
+                <button id="startUpload" class="bg-green-500 text-white font-medium py-2 px-4 rounded-lg">Subir</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="modal-overlay">
+        <div class="modal-content">
+            <h3 class="text-xl font-bold mb-4">Configuración</h3>
+            
+            <div class="mb-4">
+                <p class="font-medium mb-2">Tema</p>
+                <div class="flex space-x-2">
+                    <button class="bg-gray-800 text-white py-2 px-4 rounded-lg">Oscuro</button>
+                    <button class="bg-gray-600 text-white py-2 px-4 rounded-lg">Claro</button>
+                </div>
+            </div>
+            
+            <div class="mb-4">
+                <p class="font-medium mb-2">Calidad de streaming</p>
+                <select class="w-full px-4 py-3 bg-gray-800 rounded-lg text-white">
+                    <option>Alta (320kbps)</option>
+                    <option>Media (192kbps)</option>
+                    <option>Baja (128kbps)</option>
+                </select>
+            </div>
+            
+            <div class="mb-6">
+                <p class="font-medium mb-2">Cuenta</p>
+                <div id="userInfo" class="flex items-center mb-3">
+                    <div class="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center mr-3">
+                        <i class="fas fa-user text-gray-300"></i>
+                    </div>
+                    <div>
+                        <p id="userEmail" class="text-white">usuario@ejemplo.com</p>
+                        <p class="text-sm text-gray-400">Cuenta gratuita</p>
+                    </div>
+                </div>
+                <button id="logoutButton" class="text-red-500">
+                    <i class="fas fa-sign-out-alt mr-2"></i> Cerrar sesión
+                </button>
+            </div>
+            
+            <div class="flex justify-end">
+                <button id="closeSettingsModal" class="bg-green-500 text-white font-medium py-2 px-4 rounded-lg">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK v9 (modular) -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
+        import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, orderBy, query, onSnapshot, serverTimestamp, updateDoc, where } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
+        import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
+
+        // Firebase configuration  
+        const firebaseConfig = {
+            apiKey: "AIzaSyCmFq5ISq59Ql84Ntf_QiynlQtMX31zmwo",
+            authDomain: "fuck-musix.firebaseapp.com",
+            projectId: "fuck-musix",
+            storageBucket: "fuck-musix.firebasestorage.app",
+            messagingSenderId: "858119028230",
+            appId: "1:858119028230:web:63dc3168ac63221a82cd87",
+            measurementId: "G-B3JK4M6STY"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+        const provider = new GoogleAuthProvider();
+        
+        // Configure Google provider
+        provider.addScope('profile');
+        provider.addScope('email');
+        provider.setCustomParameters({
+            prompt: 'select_account'
+        });
+
+        // Auth state change
+        onAuthStateChanged(auth, (user) => {
+            const authSection = document.getElementById('authSection');
+            const mainApp = document.getElementById('mainApp');
+            const userEmail = document.getElementById('userEmail');
+            
+            if (user) {
+                console.log('Usuario autenticado:', user.displayName || user.email);
+                authSection.style.display = 'none';
+                mainApp.style.display = 'flex';
+                if (userEmail) userEmail.textContent = user.email;
+                loadUserData();
+            } else {
+                console.log('Usuario no autenticado');
+                authSection.style.display = 'flex';
+                mainApp.style.display = 'none';
+            }
+        });
+
+        // Login with email and password
+        document.getElementById('loginButton').addEventListener('click', async () => {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            if (!email || !password) {
+                alert('Por favor, ingresa tu email y contraseña');
+                return;
+            }
+            
+            try {
+                await signInWithEmailAndPassword(auth, email, password);
+            } catch (error) {
+                console.error('Error de inicio de sesión:', error);
+                alert('Error al iniciar sesión: ' + error.message);
+            }
+        });
+
+        // Register with email and password
+        document.getElementById('registerButton').addEventListener('click', async () => {
+            const email = document.getElementById('registerEmail').value;
+            const password = document.getElementById('registerPassword').value;
+            const confirmPassword = document.getElementById('registerConfirmPassword').value;
+            
+            if (!email || !password || !confirmPassword) {
+                alert('Por favor, completa todos los campos');
+                return;
+            }
+            
+            if (password !== confirmPassword) {
+                alert('Las contraseñas no coinciden');
+                return;
+            }
+            
+            try {
+                await createUserWithEmailAndPassword(auth, email, password);
+            } catch (error) {
+                console.error('Error de registro:', error);
+                alert('Error al registrarse: ' + error.message);
+            }
+        });
+
+        // Login with Google
+        document.getElementById('googleLogin').addEventListener('click', async () => {
+            try {
+                await signInWithPopup(auth, provider);
+            } catch (error) {
+                console.error('Error de autenticación con Google:', error);
+                alert('Error al iniciar sesión con Google: ' + error.message);
+            }
+        });
+
+        // Logout
+        document.getElementById('logoutButton').addEventListener('click', async () => {
+            try {
+                await signOut(auth);
+            } catch (error) {
+                console.error('Error al cerrar sesión:', error);
+                alert('Error al cerrar sesión: ' + error.message);
+            }
+        });
+
+        // Load user data (tracks and playlists)
+        async function loadUserData() {
+            const user = auth.currentUser;
+            if (!user) return;
+            
+            try {
+                // Load tracks
+                const tracksQuery = query(
+                    collection(db, 'tracks'),
+                    where('userId', '==', user.uid),
+                    orderBy('createdAt', 'desc')
+                );
+                
+                const snapshot = await getDocs(tracksQuery);
+                const tracks = [];
+                
+                snapshot.forEach(doc => {
+                    tracks.push({
+                        id: doc.id,
+                        ...doc.data()
+                    });
+                });
+                
+                console.log('Tracks loaded:', tracks.length);
+                
+                // Update UI with tracks
+                const songsList = document.getElementById('songsList');
+                const emptyLibrary = document.getElementById('emptyLibrary');
+                
+                if (tracks.length > 0) {
+                    songsList.style.display = 'block';
+                    emptyLibrary.style.display = 'none';
+                    
+                    songsList.innerHTML = '';
+                    tracks.forEach(track => {
+                        const songItem = document.createElement('div');
+                        songItem.className = 'bg-gray-800 rounded-lg p-3 flex items-center justify-between';
+                        songItem.innerHTML = `
+                            <div>
+                                <h4 class="font-medium">${track.title || 'Sin título'}</h4>
+                                <p class="text-sm text-gray-400">${track.artist || 'Desconocido'}</p>
+                            </div>
+                            <button class="play-button text-white bg-green-500 rounded-full w-10 h-10 flex items-center justify-center" data-id="${track.id}">
+                                <i class="fas fa-play"></i>
+                            </button>
+                        `;
+                        songsList.appendChild(songItem);
+                        
+                        // Add event listener to play button
+                        songItem.querySelector('.play-button').addEventListener('click', () => {
+                            playTrack(track);
+                        });
+                    });
+                } else {
+                    songsList.style.display = 'none';
+                    emptyLibrary.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Error loading user data:', error);
+            }
+        }
+
+        // Play track
+        function playTrack(track) {
+            const trackTitle = document.getElementById('trackTitle');
+            const trackArtist = document.getElementById('trackArtist');
+            const playPauseButton = document.getElementById('playPauseButton');
+            
+            trackTitle.textContent = track.title || 'Sin título';
+            trackArtist.textContent = track.artist || 'Desconocido';
+            
+            // Switch to player tab
+            document.getElementById('playerTab').click();
+            
+            // Create audio element if it doesn't exist
+            let audioElement = document.querySelector('audio');
+            if (!audioElement) {
+                audioElement = document.createElement('audio');
+                audioElement.id = 'audioPlayer';
+                document.body.appendChild(audioElement);
+                
+                // Set up audio event listeners
+                audioElement.addEventListener('timeupdate', updateProgress);
+                audioElement.addEventListener('loadedmetadata', () => {
+                    document.getElementById('totalTime').textContent = formatTime(audioElement.duration);
+                });
+                audioElement.addEventListener('ended', () => {
+                    playPauseButton.innerHTML = '<i class="fas fa-play text-2xl"></i>';
+                });
+                
+                // Volume control
+                document.getElementById('volumeSlider').addEventListener('input', (e) => {
+                    audioElement.volume = e.target.value / 100;
+                });
+            }
+            
+            // Set audio source and play
+            audioElement.src = track.url;
+            audioElement.play();
+            playPauseButton.innerHTML = '<i class="fas fa-pause text-2xl"></i>';
+            
+            // Start visualizer animation
+            startVisualizer();
+        }
+
+        // Update progress bar
+        function updateProgress() {
+            const audioElement = document.querySelector('audio');
+            if (!audioElement) return;
+            
+            const currentTime = document.getElementById('currentTime');
+            const progressFill = document.querySelector('.progress-fill');
+            
+            currentTime.textContent = formatTime(audioElement.currentTime);
+            
+            const percentage = (audioElement.currentTime / audioElement.duration) * 100;
+            progressFill.style.width = `${percentage}%`;
+        }
+
+        // Format time in mm:ss
+        function formatTime(seconds) {
+            if (isNaN(seconds)) return '0:00';
+            
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        // Play/Pause button
+        document.getElementById('playPauseButton').addEventListener('click', () => {
+            const audioElement = document.querySelector('audio');
+            const playPauseButton = document.getElementById('playPauseButton');
+            
+            if (!audioElement || !audioElement.src) return;
+            
+            if (audioElement.paused) {
+                audioElement.play();
+                playPauseButton.innerHTML = '<i class="fas fa-pause text-2xl"></i>';
+                startVisualizer();
+            } else {
+                audioElement.pause();
+                playPauseButton.innerHTML = '<i class="fas fa-play text-2xl"></i>';
+                stopVisualizer();
+            }
+        });
+
+        // Create visualizer
+        function createVisualizer() {
+            const visualizer = document.querySelector('.visualizer');
+            visualizer.innerHTML = '';
+            
+            for (let i = 0; i < 30; i++) {
+                const bar = document.createElement('div');
+                bar.className = 'visualizer-bar';
+                visualizer.appendChild(bar);
+            }
+        }
+
+        // Initialize visualizer
+        createVisualizer();
+
+        // Visualizer animation
+        let visualizerInterval;
+
+        function startVisualizer() {
+            stopVisualizer();
+            
+            const bars = document.querySelectorAll('.visualizer-bar');
+            
+            visualizerInterval = setInterval(() => {
+                bars.forEach(bar => {
+                    const height = Math.random() * 30;
+                    bar.style.height = `${height}px`;
+                });
+            }, 100);
+        }
+
+        function stopVisualizer() {
+            if (visualizerInterval) {
+                clearInterval(visualizerInterval);
+            }
+        }
+
+        // Tab navigation
+        document.getElementById('loginTab').addEventListener('click', () => {
+            document.getElementById('loginTab').classList.add('text-white', 'border-green-500');
+            document.getElementById('loginTab').classList.remove('text-gray-400', 'border-transparent');
+            document.getElementById('registerTab').classList.add('text-gray-400', 'border-transparent');
+            document.getElementById('registerTab').classList.remove('text-white', 'border-green-500');
+            
+            document.getElementById('loginForm').classList.add('active');
+            document.getElementById('registerForm').classList.remove('active');
+        });
+
+        document.getElementById('registerTab').addEventListener('click', () => {
+            document.getElementById('registerTab').classList.add('text-white', 'border-green-500');
+            document.getElementById('registerTab').classList.remove('text-gray-400', 'border-transparent');
+            document.getElementById('loginTab').classList.add('text-gray-400', 'border-transparent');
+            document.getElementById('loginTab').classList.remove('text-white', 'border-green-500');
+            
+            document.getElementById('registerForm').classList.add('active');
+            document.getElementById('loginForm').classList.remove('active');
+        });
+
+        // Main app tabs
+        const tabButtons = ['playerTab', 'libraryTab', 'equalizerTab'];
+        const tabContents = ['playerContent', 'libraryContent', 'equalizerContent'];
+
+        tabButtons.forEach((tabId, index) => {
+            document.getElementById(tabId).addEventListener('click', () => {
+                // Update tab buttons
+                tabButtons.forEach(id => {
+                    const element = document.getElementById(id);
+                    if (id === tabId) {
+                        element.classList.add('text-green-500', 'border-b-2', 'border-green-500');
+                        element.classList.remove('text-gray-400');
+                    } else {
+                        element.classList.remove('text-green-500', 'border-b-2', 'border-green-500');
+                        element.classList.add('text-gray-400', 'border-transparent');
+                    }
+                });
+                
+                // Update tab contents
+                tabContents.forEach(id => {
+                    const element = document.getElementById(id);
+                    if (id === tabContents[index]) {
+                        element.classList.add('active');
+                    } else {
+                        element.classList.remove('active');
+                    }
+                });
+            });
+        });
+
+        // Add songs button
+        document.getElementById('addSongsButton').addEventListener('click', () => {
+            document.getElementById('uploadModal').style.display = 'flex';
+        });
+
+        // Close upload modal
+        document.getElementById('closeUploadModal').addEventListener('click', () => {
+            document.getElementById('uploadModal').style.display = 'none';
+        });
+
+        // Settings button
+        document.getElementById('settingsButton').addEventListener('click', () => {
+            document.getElementById('settingsModal').style.display = 'flex';
+        });
+
+        // Close settings modal
+        document.getElementById('closeSettingsModal').addEventListener('click', () => {
+            document.getElementById('settingsModal').style.display = 'none';
+        });
+
+        // Upload functionality
+        document.getElementById('startUpload').addEventListener('click', () => {
+            const fileInput = document.getElementById('fileInput');
+            const files = fileInput.files;
+            
+            if (!files || files.length === 0) {
+                alert('Por favor, selecciona al menos un archivo');
+                return;
+            }
+            
+            // Show progress
+            document.getElementById('uploadProgress').classList.remove('hidden');
+            
+            // Upload each file
+            Array.from(files).forEach(file => {
+                uploadFile(file);
+            });
+        });
+
+        // Simulated upload for demo
+        function uploadFile(file) {
+            const uploadFileName = document.getElementById('uploadFileName');
+            const uploadPercent = document.getElementById('uploadPercent');
+            const uploadProgressBar = document.getElementById('uploadProgressBar');
+            
+            uploadFileName.textContent = file.name;
+            
+            // Simulate upload progress
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += 5;
+                uploadPercent.textContent = `${progress}%`;
+                uploadProgressBar.style.width = `${progress}%`;
+                
+                if (progress >= 100) {
+                    clearInterval(interval);
+                    
+                    // Add to Firestore
+                    addTrackToFirestore(file);
+                    
+                    setTimeout(() => {
+                        document.getElementById('uploadModal').style.display = 'none';
+                        document.getElementById('uploadProgress').classList.add('hidden');
+                        document.getElementById('fileInput').value = '';
+                        
+                        // Reload user data
+                        loadUserData();
+                    }, 1000);
+                }
+            }, 100);
+        }
+
+        // Add track to Firestore
+        async function addTrackToFirestore(file) {
+            const user = auth.currentUser;
+            if (!user) return;
+            
+            try {
+                // Extract track info from filename
+                const fileName = file.name.replace('.mp3', '');
+                let title = fileName;
+                let artist = 'Desconocido';
+                
+                if (fileName.includes(' - ')) {
+                    const parts = fileName.split(' - ');
+                    artist = parts[0].trim();
+                    title = parts[1].trim();
+                }
+                
+                // This is a demo, so we're not actually uploading the file
+                // In a real app, you would upload to a storage service and get a URL
+                const fakeUrl = 'https://example.com/music/' + file.name;
+                
+                await addDoc(collection(db, 'tracks'), {
+                    title,
+                    artist,
+                    url: fakeUrl,
+                    duration: 180, // Fake duration of 3 minutes
+                    userId: user.uid,
+                    playlist: 'default',
+                    createdAt: serverTimestamp(),
+                    updatedAt: serverTimestamp()
+                });
+                
+                console.log('Track added to Firestore');
+            } catch (error) {
+                console.error('Error adding track to Firestore:', error);
+                alert('Error al guardar la canción: ' + error.message);
+            }
+        }
+
+        // Initialize all eq sliders to center position
+        document.querySelectorAll('#equalizerContent input[type="range"]').forEach(slider => {
+            const min = parseInt(slider.getAttribute('min') || '-12');
+            const max = parseInt(slider.getAttribute('max') || '12');
+            slider.value = (min + max) / 2;
+        });
+    </script>
+</body>
+</html>
